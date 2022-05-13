@@ -50,7 +50,7 @@ resource "equinix_metal_device" "tink_provisioner" {
   operating_system = "ubuntu_20_04"
   billing_cycle    = "hourly"
   project_id       = var.project_id
-  user_data        = file("setup.sh")
+  user_data        = file("setup.sh") //TODO use templatefile to add local.tink_host_ip
 }
 
 resource "equinix_metal_device_network_type" "tink_provisioner_network_type" {
@@ -125,18 +125,18 @@ locals {
   ssh_key_name = "cluster-key"
   cluster_name = "my-eks-cluster"
   control_plane_ip = "192.168.50.14" //TODO FAKE IP - This will be a floating VIP that will be used for control plane HA
-  tink_cidr    = "192.168.50.0/28"
+  tink_cidr    = "192.168.50.0/24"
   tink_host_ip = cidrhost(local.tink_cidr, 1)
   tink_workers = [for idx, worker in equinix_metal_device.tink_worker : {
     id = worker.id
     hostname = worker.hostname
     vendor = "Dell"
-    bmc_ip = ""
-    bmc_username = ""
-    bmc_password = ""
+    bmc_ip = cidrhost(local.tink_cidr, idx + 2) //fake bmc ip to avoid errors
+    bmc_username = "admin" //fake bmc user to avoid errors
+    bmc_password = "admin" //fake bmc pwd to avoid errors
     mac = worker.ports[1].mac
     ip_address = cidrhost(local.tink_cidr, idx + 2)
-    gateway = cidrhost(local.tink_cidr, 15)
+    gateway = cidrhost(local.tink_cidr, 50)
     netmask = cidrnetmask(local.tink_cidr)
     nameservers = "8.8.8.8" //TODO GET NAMESERVERS
   }]
