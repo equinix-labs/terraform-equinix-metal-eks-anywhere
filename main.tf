@@ -169,7 +169,7 @@ resource "null_resource" "generate_hardware" {
     inline = [
       "chmod +x /tmp/generate_hw_csv.sh",
       "/tmp/generate_hw_csv.sh ${join("^", local.tink_workers_str)}",
-      "TINKERBELL_PROVIDER=true eksctl-anywhere generate hardware --filename /root/hardware.csv --tinkerbell-ip ${local.tink_host_ip} --skip-power-actions"
+      "TINKERBELL_PROVIDER=true eksctl-anywhere generate hardware --filename /root/hardware.csv --tinkerbell-ip ${local.tink_host_ip}"
     ]
   }
 }
@@ -213,7 +213,7 @@ resource "null_resource" "create_cluster" {
       "sed -i 's/\\$CONTROL_PLANE_IP/${local.control_plane_ip}/g' $CLUSTER_NAME.yaml",
       "sed -i 's/\\$TINKERBELL_IP/${local.tink_host_ip}/g' $CLUSTER_NAME.yaml",
       "sed -i 's/\\$SSH_PUB_KEY/$(cat /root/.ssh/${local.ssh_key_name}.pub)/g' $CLUSTER_NAME.yaml",
-      # "eksctl-anywhere create cluster --filename $CLUSTER_NAME.yaml --hardwarefile hardware.yaml"
+      "eksctl-anywhere create cluster --filename $CLUSTER_NAME.yaml --hardwarefile hardware.yaml --skip-power-actions"
     ]
   }
 }
