@@ -7,7 +7,8 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
    ```sh
    metal device create --plan=c3.small.x86 --metro=da --hostname eksa-admin --operating-system ubuntu_20_04
    ```
-
+   Further references to `${eksa-admin}` should be subsituted with the Public IP address of this node that is used in the VLAN.
+   
 2. <details><summary>Follow Docker Install instructions from https://docs.docker.com/engine/install/ubuntu/</summary>
    ```sh
    sudo apt-get remove docker docker-engine docker.io containerd runc
@@ -48,7 +49,8 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
      ```sh
      metal ip request --facility da11 --type public_ipv4 --quantity 16
      ```
-
+     (IP reservations should be created within the Metro, facility is used as a workaround for now)
+     This pool will be referred to as `${pool}` in later steps with pseudo-code to refer to specific addresses within the pool. 
 5. Create a Metal Gateway: (TODO: <https://github.com/equinix/metal-cli/issues/205>)
      (Using the UI: use selected Metro, VLAN, and Public IP Reservation)
 6. Create worker nodes eksa-node01 - ekasa-node-005 with Custom IPXE <http://{eks-a-public-address>}
@@ -60,7 +62,7 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
 7. Convert the nodes to Layer2-Bonded: (TODO: <https://github.com/equinix/metal-cli/issues/206>)
      (Using the UI: Convert nodes to Layer2-Unbonded (Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names))
 8. Capture the MAC Addresses and create `hardware.csv` file on `eks-admin` in `/root/`.
-     i. Use `metal` and `jq` to grab HW MAC addresses:
+   i. Use `metal` and `jq` to grab HW MAC addresses:
         
       ```sh
       for i in 4a246de4-b229-4d8b-96f7-d15859a93863 2a70cb3c-7ccb-4339-9ef4-bab41902ad7d 58af545f-2a9e-4b33-ad76-4ce3f789bf28 01dfc360-28b7-4dfb-9390-daebff48d3a9 329092a3-6f8a-4b9e-8e0b-0f836fe4fa4d
@@ -70,7 +72,7 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
       ```
 
       (TODO: use a singe `jq` expression against `metal devices list` to emit all CSV rows?)
-     ii. Create a line for each node (format depends on version of eksanywhere, some versions will require a `labels` and `disk` field):
+   ii. Create a line for each node (format depends on version of eksanywhere, some versions will require a `labels` and `disk` field):
       ```csv
       hostname,vendor,bmc_ip,bmc_username,bmc_password,bmc_vendor,mac,ip_address,gateway,netmask,nameservers,id
       eks-node0${i},Equinix,0.0.0.${1},ADMIN,PASSWORD,Equinix,${mac},${pool .($i+1)},${pool .1},255.255.255.240,8.8.8.8,
@@ -88,14 +90,15 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
 
       `systemctl restart networking`
 10. Install Tinkerbell on eksa-admin
-    i. `scp tinkerbell-stack.tar.gz ${eksa-admin}:/root` (tarball from the Beta program)
-    ii. ```sh
+   i. `scp tinkerbell-stack.tar.gz ${eksa-admin}:/root` (tarball from the Beta program)
+   ii. ```sh
         ssh ${eksa-admin}
         tar zxvf tinkerbell-stack.tar.gz
         cd tinerbell-stack
         export TINKERBELL_HOST_IP=${eks-admin}
         docker compose up -d
         ```
+   (If opting to use the latest `main` branch of https://github.com/aws/eks-anywhere, this step can be skipped. Tinkerbell is installed in kind by the `create cluster` command)
 11. Install `kubectl` on eksa-admin:
 
       ```sh
@@ -122,7 +125,7 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
       make build
       cp bin/eksctl-anywhere /usr/local/bin
       ```
-
+      (If opting to use the latest `main` branch for the build, the Hardware CSV format and eksctl arguments may be different)
 13. Create Tinkerbell Hardware
 
       ```sh
