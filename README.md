@@ -3,6 +3,12 @@
 Steps below align with EKS-A Beta instructions. The steps below are intended to be complete, making reference to binaries from the EKS-A on Bare Metal Beta install guide. Confer with Beta Install guide when needed.
 
 1. Create an EKS-A Admin machine:
+   Using the [metal-cli](https://github.com/equinix/metal-cli):
+
+   Create an [API Key](https://console.equinix.com/users/-/api-keys) and register it with the Metal CLI:
+   ```sh
+   metal init
+   ```
 
    ```sh
    metal device create --plan=c3.small.x86 --metro=da --hostname eksa-admin --operating-system ubuntu_20_04
@@ -13,6 +19,7 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
    ```sh
    sudo apt-get remove docker docker-engine docker.io containerd runc
    ```
+   This will have no effect on Equinix Metal, none of these packages are installed.
 
    ```sh
     sudo apt-get update
@@ -22,6 +29,7 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
       gnupg \
       lsb-release
     ```
+    On Equinix Metal, only ca-certificates will be installed.
 
     ```sh
     sudo mkdir -p /etc/apt/keyrings
@@ -47,32 +55,50 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
 4. Create a Public IP Reservation (16 addresses): (TODO: <https://github.com/equinix/metal-cli/issues/206>)
 
      ```sh
-     metal ip request --facility da11 --type public_ipv4 --quantity 16
+     metal ip request --facility da11 --type public_ipv4 --quantity 16 --tags eksa
+     #Capture the ID, Network, Gateway, and Netmask using jq
+     i=1 # We will increment "i" for the eks-a node and eksa-node-* nodes
+     POOL_ID=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .id')
+     POOL_NW=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .network')
+     POOL_GW=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .gateway')
+     POOL_NM=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .netmask')
+     EKSA_A=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+'$i'))')
      ```
      (IP reservations should be created within the Metro, facility is used as a workaround for now)
-     This pool will be referred to as `${pool}` in later steps with pseudo-code to refer to specific addresses within the pool. 
+     These POOL variables will be referred to in later steps with pseudo-code to refer to specific addresses within the pool. 
 5. Create a Metal Gateway: (TODO: <https://github.com/equinix/metal-cli/issues/205>)
      (Using the UI: use selected Metro, VLAN, and Public IP Reservation)
-6. Create worker nodes eksa-node01 - ekasa-node-005 with Custom IPXE <http://{eks-a-public-address>}
+6. Create Tinkerbell worker nodes `eksa-node-001` - `eksa-node-002` with Custom IPXE <http://{eks-a-public-address>}. These nodes will be provisioned as EKS-A Control Plane *OR* Worker nodes.
 
      ```sh
-     for a in {1..5}; do metal device create --plan c3.small.x86 --metro da --hostname eksa-node-00$a --ipxe-script-url http://${eksa-admin} --os custom_ipxe; done
+     for a in {1..2}; do
+       metal device create --plan c3.small.x86 --metro da --hostname eksa-node-00$a \
+         --ipxe-script-url http://${eksa-admin} --os custom_ipxe
+     done
      ```
 
 7. Convert the nodes to Layer2-Bonded: (TODO: <https://github.com/equinix/metal-cli/issues/206>)
-     (Using the UI: Convert nodes to Layer2-Unbonded (Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names))
+     (Using the UI: Convert nodes to [`Layer2-Unbonded`](https://metal.equinix.com/developers/docs/layer2-networking/layer2-mode/#converting-to-layer-2-unbonded-mode) (Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names))
 8. Capture the MAC Addresses and create `hardware.csv` file on `eks-admin` in `/root/`.
-   i. Use `metal` and `jq` to grab HW MAC addresses:
-        
+   1. Create the CSV Header:
       ```sh
-      for i in 4a246de4-b229-4d8b-96f7-d15859a93863 2a70cb3c-7ccb-4339-9ef4-bab41902ad7d 58af545f-2a9e-4b33-ad76-4ce3f789bf28 01dfc360-28b7-4dfb-9390-daebff48d3a9 329092a3-6f8a-4b9e-8e0b-0f836fe4fa4d
-        do
-        metal device get -i $i -o json | jq -r ‘.network_ports | .[] | select(.name == “eth0”) | .data.mac’
-      done
+      echo hostname,vendor,bmc_ip,bmc_username,bmc_password,bmc_vendor,mac,ip_address,gateway,netmask,nameservers,id > hardware.csv
       ```
 
-      (TODO: use a singe `jq` expression against `metal devices list` to emit all CSV rows?)
-   ii. Create a line for each node (format depends on version of eksanywhere, some versions will require a `labels` and `disk` field):
+   2. Use `metal` and `jq` to grab HW MAC addresses and add them to the hardware.csv:
+      
+      ```sh
+      node_ids=$(metal devices list -o json | jq -r '.[] | select(.hostname | startswith("eksa-node")) | .id')
+
+      for id in $node_ids; do
+        let i++
+        MAC=$(metal device get -i $id -o json | jq -r ‘.network_ports | .[] | select(.name == “eth0”) | .data.mac’)
+        IP=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+'$i'))')
+        echo "eks-node-00${i},Equinix,0.0.0.${i},ADMIN,PASSWORD,Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8," >> hardware.csv
+      done
+      ```
+      
+   3. Create a line for each node (format depends on version of eksanywhere, some versions will require a `labels` and `disk` field):
       ```csv
       hostname,vendor,bmc_ip,bmc_username,bmc_password,bmc_vendor,mac,ip_address,gateway,netmask,nameservers,id
       eks-node0${i},Equinix,0.0.0.${1},ADMIN,PASSWORD,Equinix,${mac},${pool .($i+1)},${pool .1},255.255.255.240,8.8.8.8,
