@@ -79,7 +79,7 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
      ```sh
      for a in {1..2}; do
        metal device create --plan c3.small.x86 --metro da --hostname eksa-node-00$a \
-         --ipxe-script-url http://${POOL_ADMIN} --os custom_ipxe
+         --ipxe-script-url http://${POOL_ADMIN} --operating-system custom_ipxe
      done
      ```
 
@@ -208,11 +208,7 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
 
       ```yaml
       spec:
-        tinkerbellCertURL: "http://${eksa-admin}:42114/cert"
-        tinkerbellGRPCAuth: "${eksa-admin}:42113"
         tinkerbellIP: "${eksa-admin}"
-        tinkerbellHegelURL: "http://${eksa-admin}:50061"
-        tinkerbellPBnJGRPCAuth: "${eksa-admin}:50051"
       ```
 
 1. Manually set the public ssh key in `TinkerbellMachineConfig` `users[name=ec2-user].sshAuthorizedKeys`
@@ -220,7 +216,9 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
 1. Create an EKS-A Cluster
 
       ```sh
-      eksctl-anywhere create cluster --filename $CLUSTER_NAME.yaml --hardwarefile hardware-manifests/hardware.yaml --skip-power-actions --force-cleanup
+      eksctl-anywhere create cluster --filename $CLUSTER_NAME.yaml \
+       --hardware-csv hardware.csv --tinkerbell-bootstrap-ip $POOL_ADMIN \
+       --skip-power-actions --force-cleanup -v 9
       ```
 
       (This command can be rerun if errors are encountered)
