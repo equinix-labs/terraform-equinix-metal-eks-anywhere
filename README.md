@@ -148,14 +148,14 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
 
     1. Fetch, unzip, and install the EKS-Anywhere (Beta) binary
 
-       ```sh
-       ssh -t root@$PUB_ADMIN <<EOS
-       wget -q https://eks-anywhere-beta.s3.amazonaws.com/baremetal/baremetal-bundle.zip
-       apt-get install unzip
-       unzip -P $NDA_PW baremetal-bundle.zip
-       cp baremetal-bundle/eksctl-anywhere /usr/local/bin
-       EOS
-       ```
+      ```sh
+      ssh -t root@$PUB_ADMIN <<EOS
+      wget -q https://eks-anywhere-beta.s3.amazonaws.com/baremetal/baremetal-bundle.zip
+      apt-get install unzip
+      unzip -P $NDA_PW baremetal-bundle.zip
+      cp baremetal-bundle/eksctl-anywhere /usr/local/bin
+      EOS
+      ```
 
 1. Install `kubectl` on eksa-admin:
 
