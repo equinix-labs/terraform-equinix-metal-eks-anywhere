@@ -90,7 +90,7 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
    1. Create the CSV Header:
 
       ```sh
-      echo hostname,vendor,bmc_ip,bmc_username,bmc_password,bmc_vendor,mac,ip_address,gateway,netmask,nameservers,id > hardware.csv
+      echo hostname,vendor,bmc_ip,bmc_username,bmc_password,bmc_vendor,mac,ip_address,gateway,netmask,nameservers,disk,labels > hardware.csv
       ```
 
    1. Use `metal` and `jq` to grab HW MAC addresses and add them to the hardware.csv:
@@ -98,15 +98,15 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
       ```sh
       node_ids=$(metal devices list -o json | jq -r '.[] | select(.hostname | startswith("eksa-node")) | .id')
 
-      for id in $node_ids; do
+      for id in $(echo $node_ids); do
         let i++
         MAC=$(metal device get -i $id -o json | jq -r ‘.network_ports | .[] | select(.name == “eth0”) | .data.mac’)
         IP=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+'$i'))')
-        echo "eks-node-00${i},Equinix,0.0.0.${i},ADMIN,PASSWORD,Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8," >> hardware.csv
+        echo "eks-node-00${i},Equinix,0.0.0.${i},ADMIN,PASSWORD,Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8,/dev/sda,type=cp" >> hardware.csv
       done
       ```
 
-      The format depends on version of `eksanywhere`, some versions may require a `labels` and `disk` field.
+      Change the type=cp label for the second node to type=dp.
 
       The BMC fields are using fake values since Equinix Metal does not expose the BMC of nodes. The IP address must be unique however, so we change that per node. In later versions of eksanywhere, we can omit the BMC requirements and these CSV fields.
 
