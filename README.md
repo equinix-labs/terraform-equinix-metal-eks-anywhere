@@ -60,13 +60,12 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
      ```sh
      metal ip request --facility da11 --type public_ipv4 --quantity 16 --tags eksa
      #Capture the ID, Network, Gateway, and Netmask using jq
-     i=1 # We will increment "i" for the eks-a node and eksa-node-* nodes
      POOL_ID=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .id')
      POOL_NW=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .network')
      POOL_GW=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .gateway')
      POOL_NM=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .netmask')
      # POOL_ADMIN will be assigned to eksa-admin within the VLAN
-     POOL_ADMIN=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+'$i'))')
+     POOL_ADMIN=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+1))')
      # PUB_ADMIN is the provisioned IPv4 public address of eks-admin which we can use with ssh
      PUB_ADMIN=$(metal devices list  -o json  | jq -r '.[] | select(.hostname=="eksa-admin") | .ip_addresses [] | select(contains({"public":true,"address_family":4})) | .address')
      ```
@@ -98,19 +97,26 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
       ```sh
       node_ids=$(metal devices list -o json | jq -r '.[] | select(.hostname | startswith("eksa-node")) | .id')
 
+     i=1 # We will increment "i" for the eksa-node-* nodes. "1" represents the eksa-admin node.
+
       for id in $(echo $node_ids); do
+        # Configure only the first node as a control-panel node
+        if [ i == 1 ]; TYPE=cp; else TYPE=dp; fi # change to 3 for HA
         let i++
         MAC=$(metal device get -i $id -o json | jq -r ‘.network_ports | .[] | select(.name == “eth0”) | .data.mac’)
         IP=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+'$i'))')
-        echo "eks-node-00${i},Equinix,0.0.0.${i},ADMIN,PASSWORD,Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8,/dev/sda,type=cp" >> hardware.csv
+        echo "eks-node-00${i},Equinix,0.0.0.${i},ADMIN,PASSWORD,Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8,/dev/sda,type=${TYPE}" >> hardware.csv
       done
+
+      scp hardware.csv root@$PUB_ADMIN:/root
       ```
 
-      Change the type=cp label for the second node to type=dp.
+      Change the `type=cp` label for the second node to `type=dp`.
 
       The BMC fields are using fake values since Equinix Metal does not expose the BMC of nodes. The IP address must be unique however, so we change that per node. In later versions of eksanywhere, we can omit the BMC requirements and these CSV fields.
 
-1. Configure VLAN address in `/etc/network/interfaces` on eksa-admin (following <https://metal.equinix.com/developers/docs/layer2-networking/hybrid-bonded-mode/>)
+1. Convert the `eksa-admin` node to Hybrid-Bonded connected to the VLAN.
+   <https://metal.equinix.com/developers/docs/layer2-networking/hybrid-bonded-mode/>
 
       ```sh
       ssh root@$PUB_ADMIN tee -a /etc/network/interfaces << EOS
@@ -125,29 +131,32 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
       EOS
       ```
 
-      `ssh root@$PUB_ADMIN systemctl restart networking`
+   This snippet configures the VLAN address in `/etc/network/interfaces` on eksa-admin.
+
+   The following will put that configuration into use:
+
+   `ssh root@$PUB_ADMIN systemctl restart networking`
 1. Install Tinkerbell on eksa-admin
-    1. `ssh root@$PUB_ADMIN wget https://eks-anywhere-beta.s3.amazonaws.com/baremetal/baremetal-bundle.zip` (zip from the Beta program)
     1. Define the NDA Password as an environment variable:
 
       ```sh
-      read -s -p "NDA Password:" NDA_PW
+      echo -n "NDA Password: "
+      read -s NDA_PW
       export NDA_PW
       echo
       ```
 
-    1. Unzip the binary
+    1. Fetch, unzip, and install the EKS-Anywhere (Beta) binary
 
        ```sh
        ssh -t root@$PUB_ADMIN <<EOS
-       wget https://eks-anywhere-beta.s3.amazonaws.com/baremetal/baremetal-bundle.zip
+       wget -q https://eks-anywhere-beta.s3.amazonaws.com/baremetal/baremetal-bundle.zip
        apt-get install unzip
        unzip -P $NDA_PW baremetal-bundle.zip
        cp baremetal-bundle/eksctl-anywhere /usr/local/bin
        EOS
        ```
 
-   (If opting to use the latest `main` branch of <https://github.com/aws/eks-anywhere>, this step can be skipped. Tinkerbell is installed in kind by the `create cluster` command)
 1. Install `kubectl` on eksa-admin:
 
    ```sh
