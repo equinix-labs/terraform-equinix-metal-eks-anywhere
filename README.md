@@ -97,15 +97,15 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
       ```sh
       node_ids=$(metal devices list -o json | jq -r '.[] | select(.hostname | startswith("eksa-node")) | .id')
 
-     i=1 # We will increment "i" for the eksa-node-* nodes. "1" represents the eksa-admin node.
+      i=1 # We will increment "i" for the eksa-node-* nodes. "1" represents the eksa-admin node.
 
       for id in $(echo $node_ids); do
-        # Configure only the first node as a control-panel node
-        if [ i == 1 ]; TYPE=cp; else TYPE=dp; fi # change to 3 for HA
-        let i++
-        MAC=$(metal device get -i $id -o json | jq -r ‘.network_ports | .[] | select(.name == “eth0”) | .data.mac’)
-        IP=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+'$i'))')
-        echo "eks-node-00${i},Equinix,0.0.0.${i},ADMIN,PASSWORD,Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8,/dev/sda,type=${TYPE}" >> hardware.csv
+         # Configure only the first node as a control-panel node
+         if [ i == 1 ]; TYPE=cp; else TYPE=dp; fi # change to 3 for HA
+         let i++
+         MAC=$(metal device get -i $id -o json | jq -r ‘.network_ports | .[] | select(.name == “eth0”) | .data.mac’)
+         IP=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+'$i'))')
+         echo "eks-node-00${i},Equinix,0.0.0.${i},ADMIN,PASSWORD,Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8,/dev/sda,type=${TYPE}" >> hardware.csv
       done
 
       scp hardware.csv root@$PUB_ADMIN:/root
@@ -176,18 +176,6 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
    snap install kubectl -channel=1.23 --classic # 1.23 matches the version used in the eks-anywhere repo
    ```
 
-1. Create Tinkerbell Hardware
-
-      ```sh
-      ssh root@$PUB_ADMIN
-      ```
-
-      ```sh
-      eksctl-anywhere generate hardware --filename hardware.csv --tinkerbell-ip ${eksa-admin}
-      ```
-
-      (note: `--filename` may be `--hardware` in newer versions)
-      View `hardware-manifests/hardware.yaml` and compare to the beta guide. Check for valid yaml contents, including generated `spec.id` values.
 1. Create EKS-A Cluster config:
 
       ```sh
