@@ -1,12 +1,10 @@
 # EKS-A Baremetal on Equinix Metal
 
-{% note %}
-**Note:** This README.md will serve as manual instructions for installing EKS-A Bare Metal on Equinix Metal.  These instructions are a work-in-progress. Once all steps are executed additional steps may be needed.
-{% endnote %}
+> **Warning**
+> This README.md will serve as manual instructions for installing EKS-A Bare Metal on Equinix Metal.  These instructions are a work-in-progress. Once all steps are executed additional steps may be needed.
 
-{% note %}
-**Note:** Ignore the `.tf` files in this project for now. These instructions will offer copy+paste ready commands where possible to simplify the process. Terraform execution will come once the manual install is ironed out.
-{% endnote %}
+> **Note**
+> Ignore the `.tf` files in this project for now. These instructions will offer copy+paste ready commands where possible to simplify the process. Terraform execution will come once the manual install is ironed out.
 
 Steps below align with EKS-A Beta instructions. The steps below are intended to be complete, making reference to binaries from the EKS-A on Bare Metal Beta install guide. Confer with Beta Install guide when needed.
 
