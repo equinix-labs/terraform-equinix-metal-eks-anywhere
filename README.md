@@ -178,17 +178,17 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
 
 1. Create EKS-A Cluster config:
 
-      ```sh
-      # SSH into eksa-admin. The special args and environment setting are just tricks to plumb $POOL_ADMIN into the eksa-admin environment.
-      LC_POOL_ADMIN=$POOL_ADMIN ssh -o SendEnv=LC_POOL_ADMIN root@$PUB_ADMIN
-      ```
+   ```sh
+   # SSH into eksa-admin. The special args and environment setting are just tricks to plumb $POOL_ADMIN into the eksa-admin environment.
+   LC_POOL_ADMIN=$POOL_ADMIN ssh -o SendEnv=LC_POOL_ADMIN root@$PUB_ADMIN
+   ```
 
-      ```sh
-      export TINKERBELL_HOST_IP=$LC_POOL_ADMIN
-      export CLUSTER_NAME=“${USER}-${RANDOM}”
-      export TINKERBELL_PROVIDER=true
-      eksctl-anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_NAME.yaml
-      ```
+   ```sh
+   export TINKERBELL_HOST_IP=$LC_POOL_ADMIN
+   export CLUSTER_NAME=“${USER}-${RANDOM}”
+   export TINKERBELL_PROVIDER=true
+   eksctl-anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_NAME.yaml
+   ```
 
 1. Manually set control-plane IP for `Cluster` resource in the config
       Modify `spec.controlPlaneConfiguration.endpoint.host` to a unique VIP address from the public IP pool. For simplicity in node configuration, we've chosen the last IP in the block.
