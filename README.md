@@ -173,7 +173,7 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
 1. Install `kubectl` on eksa-admin:
 
    ```sh
-   ssh root@$PUB_ADMIN snap install kubectl -channel=1.23 --classic
+   ssh root@$PUB_ADMIN snap install kubectl --channel=1.23 --classic
    ```
 
    Version 1.23 matches the version used in the eks-anywhere repository.
