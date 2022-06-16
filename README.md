@@ -117,7 +117,7 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
          if [ $i == 1 ]; then TYPE=cp; else TYPE=dp; fi; # change to 3 for HA
          let i++
 
-         MAC=$(metal device get -i $id -o json | jq -r ‘.network_ports | .[] | select(.name == “eth0”) | .data.mac’)
+         MAC=$(metal device get -i $id -o json | jq -r ‘.network_ports | .[] | select(.name == "eth0") | .data.mac’)
          IP=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+'$i'))')
 
          echo "eks-node-00${i},Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8,/dev/sda,type=${TYPE}" >> hardware.csv
@@ -182,7 +182,7 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
 
    ```sh
    curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-   echo “deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main” | sudo tee /etc/apt/sources.list.d/kubernetes.list
+   echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
    apt-get update
    apt-get install kubectl
    ```
@@ -196,7 +196,7 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
 
    ```sh
    export TINKERBELL_HOST_IP=$LC_POOL_ADMIN
-   export CLUSTER_NAME=“${USER}-${RANDOM}”
+   export CLUSTER_NAME="${USER}-${RANDOM}"
    export TINKERBELL_PROVIDER=true
    eksctl-anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_NAME.yaml
    ```
