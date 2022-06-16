@@ -6,7 +6,7 @@
 > **Note**
 > Ignore the `.tf` files in this project for now. These instructions will offer copy+paste ready commands where possible to simplify the process. Terraform execution will come once the manual install is ironed out.
 
-Steps below align with EKS-A Beta instructions. The steps below are intended to be complete, making reference to binaries from the EKS-A on Bare Metal Beta install guide. Confer with Beta Install guide when needed.
+Steps below align with EKS-A Beta instructions. While the steps below are intended to be complete, follow along with the EKS-A Beta Install guide for best results.
 
 1. Create an EKS-A Admin machine:
    Using the [metal-cli](https://github.com/equinix/metal-cli):
@@ -20,8 +20,6 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
    ```sh
    metal device create --plan=c3.small.x86 --metro=da --hostname eksa-admin --operating-system ubuntu_20_04
    ```
-
-   Further references to `${eksa-admin}` should be substituted with the Public IP address of this node that is used in the VLAN.
 
 1. <details><summary>Follow Docker Install instructions from https://docs.docker.com/engine/install/ubuntu/</summary>
    ```sh
@@ -65,6 +63,14 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
 
      ```sh
      metal ip request --facility da11 --type public_ipv4 --quantity 16 --tags eksa
+     ```
+
+     > **Note**
+     > IP reservations would ideally be created within the Metro, facility is used as a workaround to the CLI's limitations for now.
+
+     These variables will be referred to in later steps in executable snippets to refer to specific addresses within the pool. The correct IP reservation is chosen by looking for and expecting a single IP reservation to have the "eksa" tag applied.
+
+     ```sh
      #Capture the ID, Network, Gateway, and Netmask using jq
      POOL_ID=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .id')
      POOL_NW=$(metal ip list -o json | jq -r '.[] | select(.tags | contains(["eksa"]))? | .network')
@@ -76,26 +82,27 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
      PUB_ADMIN=$(metal devices list  -o json  | jq -r '.[] | select(.hostname=="eksa-admin") | .ip_addresses [] | select(contains({"public":true,"address_family":4})) | .address')
      ```
 
-     (IP reservations should be created within the Metro, facility is used as a workaround for now)
-     These POOL variables will be referred to in later steps with pseudo-code to refer to specific addresses within the pool.
-1. Create a Metal Gateway: (TODO: <https://github.com/equinix/metal-cli/issues/205>)
-     (Using the UI: use selected Metro, VLAN, and Public IP Reservation)
+1. Create a Metal Gateway
+   Using the UI: Choose the Metro, VLAN, and Public IP Reservation.
+   (TODO: Bring this functionality to the CLI <https://github.com/equinix/metal-cli/issues/205>)
+
 1. Create Tinkerbell worker nodes `eksa-node-001` - `eksa-node-002` with Custom IPXE <http://{eks-a-public-address>}. These nodes will be provisioned as EKS-A Control Plane *OR* Worker nodes.
 
      ```sh
      for a in {1..2}; do
        metal device create --plan c3.small.x86 --metro da --hostname eksa-node-00$a \
-         --ipxe-script-url http://${POOL_ADMIN} --operating-system custom_ipxe
+         --ipxe-script-url http://${POOL_ADMIN}/auto.ipxe --operating-system custom_ipxe
      done
      ```
 
-1. Convert `eksa-node-*` to Layer2-Bonded: (TODO: <https://github.com/equinix/metal-cli/issues/206>)
-     (Using the UI: Convert nodes to [`Layer2-Unbonded`](https://metal.equinix.com/developers/docs/layer2-networking/layer2-mode/#converting-to-layer-2-unbonded-mode) (Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names))
+1. Convert `eksa-node-*` to Layer2-Unbonded (not `eksa-admin`)
+   Using the UI: Convert nodes to [`Layer2-Unbonded`](https://metal.equinix.com/developers/docs/layer2-networking/layer2-mode/#converting-to-layer-2-unbonded-mode) (Layer2-Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names).
+   (TODO: Bring this functionality to the CLI <https://github.com/equinix/metal-cli/issues/206>)
 1. Capture the MAC Addresses and create `hardware.csv` file on `eks-admin` in `/root/`.
    1. Create the CSV Header:
 
       ```sh
-      echo hostname,vendor,bmc_ip,bmc_username,bmc_password,bmc_vendor,mac,ip_address,gateway,netmask,nameservers,disk,labels > hardware.csv
+      echo hostname,vendor,mac,ip_address,gateway,netmask,nameservers,disk,labels > hardware.csv
       ```
 
    1. Use `metal` and `jq` to grab HW MAC addresses and add them to the hardware.csv:
@@ -107,19 +114,19 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
 
       for id in $(echo $node_ids); do
          # Configure only the first node as a control-panel node
-         if [ i == 1 ]; TYPE=cp; else TYPE=dp; fi # change to 3 for HA
+         if [ $i == 1 ]; then TYPE=cp; else TYPE=dp; fi; # change to 3 for HA
          let i++
+
          MAC=$(metal device get -i $id -o json | jq -r ‘.network_ports | .[] | select(.name == “eth0”) | .data.mac’)
          IP=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+'$i'))')
-         echo "eks-node-00${i},Equinix,0.0.0.${i},ADMIN,PASSWORD,Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8,/dev/sda,type=${TYPE}" >> hardware.csv
+
+         echo "eks-node-00${i},Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8,/dev/sda,type=${TYPE}" >> hardware.csv
       done
 
       scp hardware.csv root@$PUB_ADMIN:/root
       ```
 
-      Change the `type=cp` label for the second node to `type=dp`.
-
-      The BMC fields are using fake values since Equinix Metal does not expose the BMC of nodes. The IP address must be unique however, so we change that per node. In later versions of eksanywhere, we can omit the BMC requirements and these CSV fields.
+      The BMC fields are omitted since Equinix Metal does not expose the BMC of nodes. EKS Anywhere will skip BMC steps with this configuration.
 
 1. Convert the `eksa-admin` node to Hybrid-Bonded connected to the VLAN.
    <https://metal.equinix.com/developers/docs/layer2-networking/hybrid-bonded-mode/>
@@ -166,20 +173,18 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
 1. Install `kubectl` on eksa-admin:
 
    ```sh
-   ssh root@$PUB_ADMIN
+   ssh root@$PUB_ADMIN snap install kubectl -channel=1.23 --classic
    ```
+
+   Version 1.23 matches the version used in the eks-anywhere repository.
+
+   Alternatively, SSH in and install via APT.
 
    ```sh
    curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
    echo “deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main” | sudo tee /etc/apt/sources.list.d/kubernetes.list
-   apt update
-   apt install kubectl
-   ```
-
-   Alternatively:
-
-   ```sh
-   snap install kubectl -channel=1.23 --classic # 1.23 matches the version used in the eks-anywhere repo
+   apt-get update
+   apt-get install kubectl
    ```
 
 1. Create EKS-A Cluster config:
@@ -197,22 +202,22 @@ Steps below align with EKS-A Beta instructions. The steps below are intended to 
    ```
 
 1. Manually set control-plane IP for `Cluster` resource in the config
-      Modify `spec.controlPlaneConfiguration.endpoint.host` to a unique VIP address from the public IP pool. For simplicity in node configuration, we've chosen the last IP in the block.
+   Modify `spec.controlPlaneConfiguration.endpoint.host` to a unique VIP address from the public IP pool. For simplicity, choose the last IP in the IP reservation block.
 1. Manually set the `TinkerbellDatacenterConfig` resource `spec` in config:
 
-      ```yaml
-      spec:
-        tinkerbellIP: "${eksa-admin}"
-      ```
+   ```yaml
+   spec:
+     tinkerbellIP: "${eksa-admin}"
+   ```
 
 1. Manually set the public ssh key in `TinkerbellMachineConfig` `users[name=ec2-user].sshAuthorizedKeys`
-      Key can be a locally generated on eksa-admin (`ssh-keygen -t rsa`) or an existing user key.
+   The SSH Key can be a locally generated on `eksa-admin` (`ssh-keygen -t rsa`) or an existing user key.
 1. Create an EKS-A Cluster
 
-      ```sh
-      eksctl-anywhere create cluster --filename $CLUSTER_NAME.yaml \
-       --hardware-csv hardware.csv --tinkerbell-bootstrap-ip $POOL_ADMIN \
-       --skip-power-actions --force-cleanup -v 9
-      ```
+   ```sh
+   eksctl-anywhere create cluster --filename $CLUSTER_NAME.yaml \
+     --hardware-csv hardware.csv --tinkerbell-bootstrap-ip $POOL_ADMIN \
+     --skip-power-actions --force-cleanup -v 9
+   ```
 
-      (This command can be rerun if errors are encountered)
+   (This command can be rerun if errors are encountered)
