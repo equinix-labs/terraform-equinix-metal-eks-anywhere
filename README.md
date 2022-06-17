@@ -6,6 +6,7 @@
 > **Note**
 > Ignore the `.tf` files in this project for now. These instructions will offer copy+paste ready commands where possible to simplify the process. Terraform execution will come once the manual install is ironed out.
 
+
 Steps below align with EKS-A Beta instructions. While the steps below are intended to be complete, follow along with the EKS-A Beta Install guide for best results.
 
 ## Pre-requisites
@@ -233,8 +234,10 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
 
    ```sh
    eksctl-anywhere create cluster --filename $CLUSTER_NAME.yaml \
-     --hardware-csv hardware.csv --tinkerbell-bootstrap-ip $POOL_ADMIN \
-     --skip-power-actions --force-cleanup -v 9
+     --hardware-csv hardware.csv --tinkerbell-bootstrap-ip $LC_POOL_ADMIN \
+     --force-cleanup -v 9
    ```
 
    (This command can be rerun if errors are encountered)
+
+1. Reboot the two nodes. This is to force them attempt to iPXE boot from the tinkerbell stack that eksctl-anywhere command creates.
