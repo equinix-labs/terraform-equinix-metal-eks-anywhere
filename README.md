@@ -7,12 +7,16 @@
 > Ignore the `.tf` files in this project for now. These instructions will offer copy+paste ready commands where possible to simplify the process. Terraform execution will come once the manual install is ironed out.
 
 
+ ##Current Known Issues## (Investigations ongoing)
+
+* Sometimes the pxe boot server that the nodes boot from is setup using the wrong IP address. Preventing the kubernetes nodes from ever booting up. The only known workaround is to start over from scratch and hope it works this time. You can tell if you're having the issue if the nodes are trying to boot from 172.17.0.1.
+* The create command hangs on the "Creating new workload cluster" step. This appears to be due to the cluster-api-provider-tinkerbell process never completing. The cluster-api logs indicate they're waiting for a provider-id that they're not seeing for some reason.
 Steps below align with EKS-A Beta instructions. While the steps below are intended to be complete, follow along with the EKS-A Beta Install guide for best results.
 
 ## Pre-requisites
 
-- jq
-- [metal-cli](https://github.com/equinix/metal-cli)
+* jq
+* [metal-cli](https://github.com/equinix/metal-cli)
 
 ## Steps
 
@@ -29,19 +33,10 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
    metal device create --plan=c3.small.x86 --metro=da --hostname eksa-admin --operating-system ubuntu_20_04
    ```
 
-1. Follow Docker Install instructions from <https://docs.docker.com/engine/install/ubuntu/>
-
-    Alternately, just run the docker install script:
-
-    ```sh
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sh get-docker.sh
-    ```
-
 1. Create a VLAN:
 
      ```sh
-     metal vlan create --metro da --description tinkerbell --vxlan 1000
+     metal vlan create --metro da --description eks-anywhere --vxlan 1000
      ```
 
 1. Create a Public IP Reservation (16 addresses): (TODO: <https://github.com/equinix/metal-cli/issues/206>)
@@ -112,7 +107,7 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
    Using the UI: Convert nodes to [`Layer2-Unbonded`](https://metal.equinix.com/developers/docs/layer2-networking/layer2-mode/#converting-to-layer-2-unbonded-mode) (Layer2-Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names).
    (TODO: Bring this functionality to the CLI <https://github.com/equinix/metal-cli/issues/206>)
 
-1. Capture the MAC Addresses and create `hardware.csv` file on `eks-admin` in `/root/`:
+1. Capture the MAC Addresses and create `hardware.csv` file on `eks-admin` in `/root/` (run this on the host with metal cli on it):
    1. Create the CSV Header:
 
       ```sh
@@ -179,6 +174,15 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
    apt-get install kubectl
    ```
 
+1. ssh to the eks-admin machine and follow Docker Install instructions from <https://docs.docker.com/engine/install/ubuntu/>
+
+    Alternately, just run the docker install script:
+
+    ```sh
+    ssh root@$POOL_ADMIN curl -fsSL https://get.docker.com -o get-docker.sh
+    ssh root@$POOL_ADMIN get-docker.sh
+    ```
+
 1. Create EKS-A Cluster config:
 
    ```sh
@@ -212,7 +216,7 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
 1. Manually set the public ssh key in `TinkerbellMachineConfig` `users[name=ec2-user].sshAuthorizedKeys`
    The SSH Key can be a locally generated on `eksa-admin` (`ssh-keygen -t rsa`) or an existing user key.
 
-1. Manually set the hardwareSelector for eadch TinkerbellMachineConfig.
+1. Manually set the hardwareSelector for each TinkerbellMachineConfig.
 
    For the control plane machine.
 
@@ -230,7 +234,7 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
        type: dp
    ```
 
-1. Create an EKS-A Cluster
+1. Create an EKS-A Cluster. Double check and besure $LC_POOL_ADMIN and $CLUSTER_NAME are set correctly before running this. Otherwise manually set them!
 
    ```sh
    eksctl-anywhere create cluster --filename $CLUSTER_NAME.yaml \
