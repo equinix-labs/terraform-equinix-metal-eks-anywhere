@@ -133,11 +133,15 @@ The following tools will be needed on your local development environment where y
          IP=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+'$i'))')
          echo "$NODENAME,Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8,/dev/sda,type=${TYPE}" >> hardware.csv
       done
-
-      scp hardware.csv root@$PUB_ADMIN:/root
       ```
 
-      The BMC fields are omitted since Equinix Metal does not expose the BMC of nodes. EKS Anywhere will skip BMC steps with this configuration.
+      The BMC fields are omitted because Equinix Metal does not expose the BMC of nodes. EKS Anywhere will skip BMC steps with this configuration.
+
+   1. Copy `hardware.csv` to `eksa-admin`:
+
+      ```sh
+      scp hardware.csv root@$PUB_ADMIN:/root
+      ```
 
 1. Install eksctl-anywhere on eksa-admin
     1. Define the NDA Password as an environment variable:
