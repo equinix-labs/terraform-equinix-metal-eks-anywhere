@@ -16,10 +16,12 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
 
 ## Pre-requisites
 
+The following tools will be needed on your local development environment where you will be running most of the commands in this guide.
+
 * jq
 * [metal-cli](https://github.com/equinix/metal-cli) (v0.8.0+)
 
-## Steps
+## Steps to run locally and in the Equinix Metal Console
 
 1. Create an EKS-A Admin machine:
    Using the [metal-cli](https://github.com/equinix/metal-cli):
@@ -81,7 +83,7 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
      done
      ```
 
-   Note that the ipxe-script-url doesn't actually get used in this process, we're just setting it as it's a requirement for using the custom_ipxe operating system type.
+   Note that the `ipxe-script-url` doesn't actually get used in this process, we're just setting it as it's a requirement for using the custom_ipxe operating system type.
 
 1. Convert the `eksa-admin` node to Hybrid-Bonded connected to the VLAN.
    <https://metal.equinix.com/developers/docs/layer2-networking/hybrid-bonded-mode/>
@@ -137,7 +139,7 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
 
       The BMC fields are omitted since Equinix Metal does not expose the BMC of nodes. EKS Anywhere will skip BMC steps with this configuration.
 
-1. Install Tinkerbell on eksa-admin
+1. Install eksctl-anywhere on eksa-admin
     1. Define the NDA Password as an environment variable:
 
        ```sh
@@ -157,16 +159,28 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
          cp baremetal-bundle/eksctl-anywhere /usr/local/bin
          EOS
          ```
+## Steps to run on eksa-admin
+
+We've now provided the `eksa-admin` machine with all of the variables and configuration needed in preparation.
+
+1. Login to eksa-admin with the `LC_POOL_ADMIN` variable defined
+
+   ```sh
+   # SSH into eksa-admin. The special args and environment setting are just tricks to plumb $POOL_ADMIN into the eksa-admin environment.
+   LC_POOL_ADMIN=$POOL_ADMIN ssh -o SendEnv=LC_POOL_ADMIN root@$PUB_ADMIN
+   ```
+   > **Note**
+   > The remaining steps assume you have logged into `eksa-admin` with the SSH command shown above.
 
 1. Install `kubectl` on eksa-admin:
 
    ```sh
-   ssh root@$PUB_ADMIN snap install kubectl --channel=1.23 --classic
+   snap install kubectl --channel=1.23 --classic
    ```
 
    Version 1.23 matches the version used in the eks-anywhere repository.
 
-   Alternatively, SSH in and install via APT.
+   Alternatively, install via APT.
 
    ```sh
    curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
@@ -180,18 +194,11 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
     Alternately, just run the docker install script:
 
     ```sh
-    ssh root@$POOL_ADMIN curl -fsSL https://get.docker.com -o get-docker.sh
-    ssh root@$POOL_ADMIN get-docker.sh
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    get-docker.sh
     ```
 
 1. Create EKS-A Cluster config:
-   > **Note**
-   > The remaining steps assume you have logged into `eksa-admin` with the SSH command shown below. These steps also assume you have defined the variables set below.
-
-   ```sh
-   # SSH into eksa-admin. The special args and environment setting are just tricks to plumb $POOL_ADMIN into the eksa-admin environment.
-   LC_POOL_ADMIN=$POOL_ADMIN ssh -o SendEnv=LC_POOL_ADMIN root@$PUB_ADMIN
-   ```
 
    ```sh
    export TINKERBELL_HOST_IP=$LC_POOL_ADMIN
@@ -199,6 +206,9 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
    export TINKERBELL_PROVIDER=true
    eksctl-anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_NAME.yaml
    ```
+
+   > **Note**
+   > The remaining steps assume you have defined the variables set above.
 
 1. Manually set control-plane IP for `Cluster` resource in the config
 
