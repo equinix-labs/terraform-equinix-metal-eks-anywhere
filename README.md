@@ -7,16 +7,17 @@
 > Ignore the `.tf` files in this project for now. These instructions will offer copy+paste ready commands where possible to simplify the process. Terraform execution will come once the manual install is ironed out.
 
 
- ##Current Known Issues## (Investigations ongoing)
+ ## Known Issues (Investigations ongoing)
 
 * Sometimes the pxe boot server that the nodes boot from is setup using the wrong IP address. Preventing the kubernetes nodes from ever booting up. The only known workaround is to start over from scratch and hope it works this time. You can tell if you're having the issue if the nodes are trying to boot from 172.17.0.1.
 * The create command hangs on the "Creating new workload cluster" step. This appears to be due to the cluster-api-provider-tinkerbell process never completing. The cluster-api logs indicate they're waiting for a provider-id that they're not seeing for some reason.
 Steps below align with EKS-A Beta instructions. While the steps below are intended to be complete, follow along with the EKS-A Beta Install guide for best results.
+* `systemctl restart networking` may complain that certain VLANs already exist. This doesn't always happen. 
 
 ## Pre-requisites
 
 * jq
-* [metal-cli](https://github.com/equinix/metal-cli)
+* [metal-cli](https://github.com/equinix/metal-cli) (v0.8.0+)
 
 ## Steps
 
@@ -39,7 +40,7 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
      metal vlan create --metro da --description eks-anywhere --vxlan 1000
      ```
 
-1. Create a Public IP Reservation (16 addresses): (TODO: <https://github.com/equinix/metal-cli/issues/206>)
+1. Create a Public IP Reservation (16 addresses):
 
      ```sh
      metal ip request --metro da --type public_ipv4 --quantity 16 --tags eksa
@@ -184,6 +185,8 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
     ```
 
 1. Create EKS-A Cluster config:
+   > **Note**
+   > The remaining steps assume you have logged into `eksa-admin` with the SSH command shown below. These steps also assume you have defined the variables set below.
 
    ```sh
    # SSH into eksa-admin. The special args and environment setting are just tricks to plumb $POOL_ADMIN into the eksa-admin environment.
@@ -234,7 +237,7 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
        type: dp
    ```
 
-1. Create an EKS-A Cluster. Double check and besure $LC_POOL_ADMIN and $CLUSTER_NAME are set correctly before running this. Otherwise manually set them!
+1. Create an EKS-A Cluster. Double check and be sure `$LC_POOL_ADMIN` and `$CLUSTER_NAME` are set correctly before running this (they were passed through SSH or otherwise defined in previous steps). Otherwise manually set them!
 
    ```sh
    eksctl-anywhere create cluster --filename $CLUSTER_NAME.yaml \
