@@ -6,13 +6,13 @@
 > **Note**
 > Ignore the `.tf` files in this project for now. These instructions will offer copy+paste ready commands where possible to simplify the process. Terraform execution will come once the manual install is ironed out.
 
+Steps below align with EKS-A Beta instructions. While the steps below are intended to be complete, follow along with the EKS-A Beta Install guide for best results.
 
  ## Known Issues (Investigations ongoing)
 
-* Sometimes the pxe boot server that the nodes boot from is setup using the wrong IP address. Preventing the kubernetes nodes from ever booting up. The only known workaround is to start over from scratch and hope it works this time. You can tell if you're having the issue if the nodes are trying to boot from 172.17.0.1.
-* The create command hangs on the "Creating new workload cluster" step. This appears to be due to the cluster-api-provider-tinkerbell process never completing. The cluster-api logs indicate they're waiting for a provider-id that they're not seeing for some reason.
-Steps below align with EKS-A Beta instructions. While the steps below are intended to be complete, follow along with the EKS-A Beta Install guide for best results.
-* `systemctl restart networking` may complain that certain VLANs already exist. This doesn't always happen. 
+* [#11](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/11) Sometimes the pxe boot server that the nodes boot from is setup using the wrong IP address. Preventing the kubernetes nodes from ever booting up. The only known workaround is to start over from scratch and hope it works this time. You can tell if you're having the issue if the nodes are trying to boot from 172.17.0.1.
+* [#10](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/10) The create command hangs on the "Creating new workload cluster" step. This appears to be due to the cluster-api-provider-tinkerbell process never completing. The cluster-api logs indicate they're waiting for a provider-id that they're not seeing for some reason.
+* [#9](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/9) `systemctl restart networking` may complain that certain VLANs already exist. This doesn't always happen.
 
 ## Pre-requisites
 
