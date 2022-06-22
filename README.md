@@ -180,23 +180,25 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 
    Version 1.23 matches the version used in the eks-anywhere repository.
 
-   Alternatively, install via APT.
-
+   <details><summary>Alternatively, install via APT.</summary>
+   
    ```sh
    curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
    echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
    apt-get update
    apt-get install kubectl
    ```
+   </details>
+1. Install Docker
 
-1. ssh to the eks-admin machine and follow Docker Install instructions from <https://docs.docker.com/engine/install/ubuntu/>
-
-    Alternately, just run the docker install script:
+    Run the docker install script:
 
     ```sh
     curl -fsSL https://get.docker.com -o get-docker.sh
     get-docker.sh
     ```
+    
+    Alternatively, follow the instructions from <https://docs.docker.com/engine/install/ubuntu/>.
 
 1. Create EKS-A Cluster config:
 
