@@ -261,6 +261,12 @@ We've now provided the `eksa-admin` machine with all of the variables and config
        type: dp
    ```
 
+1. Change the osFamily to ubuntu for each TinkerbellMachineConfig section
+
+   ```sh
+   osFamily: ubuntu
+   ```
+
 1. Create an EKS-A Cluster. Double check and be sure `$LC_POOL_ADMIN` and `$CLUSTER_NAME` are set correctly before running this (they were passed through SSH or otherwise defined in previous steps). Otherwise manually set them!
 
    ```sh
