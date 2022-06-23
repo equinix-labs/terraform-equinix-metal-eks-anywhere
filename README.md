@@ -147,7 +147,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 
    ```sh
    # SSH into eksa-admin. The special args and environment setting are just tricks to plumb $POOL_ADMIN and $POOL_VIP into the eksa-admin environment.
-   LC_POOL_ADMIN=$POOL_ADMIN LC_POOL_VIP=$POOL_VIP ssh -o SendEnv=LC_POOL_ADMIN,LC_POOL_VIP root@$PUB_ADMIN
+   LC_POOL_ADMIN=$POOL_ADMIN LC_POOL_VIP=$POOL_VIP LC_TINK_VIP=$TINK_VIP ssh -o SendEnv=LC_POOL_ADMIN,LC_POOL_VIP,LC_TINK_VIP root@$PUB_ADMIN
    ```
 
    > **Note**
@@ -156,12 +156,14 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 1. Install eksctl-anywhere on eksa-admin
 
       ```sh
-      git clone https://github.com/aws/eks-anywhere
-      apt install make
-      snap install go --classic
-      cd eks-anywhere
-      make eks-a
-      mv bin/eksctl-anywhere /usr/local/bin
+      apt-get update
+      git clone https://github.com/aws/eks-anywhere;
+      apt-get install make;
+      snap install go --classic;
+      cd eks-anywhere;
+      make eks-a;
+      mv bin/eksctl-anywhere /usr/local/bin;
+      cd;
       ```
 
 1. Install `kubectl` on eksa-admin:
@@ -197,7 +199,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 1. Create EKS-A Cluster config:
 
    ```sh
-   export TINKERBELL_HOST_IP=$LC_POOL_ADMIN
+   export TINKERBELL_HOST_IP=$LC_TINK_VIP
    export CLUSTER_NAME="${USER}-${RANDOM}"
    export TINKERBELL_PROVIDER=true
    eksctl-anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_NAME.yaml
@@ -222,12 +224,12 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 1. Manually set the `TinkerbellDatacenterConfig` resource `spec` in config:
 
    ``` sh
-   echo $LC_POOL_ADMIN
+   echo $LC_TINK_VIP
    ```
 
    ```yaml
    spec:
-     tinkerbellIP: "<value of LC_POOL_ADMIN>"
+     tinkerbellIP: "<value of LC_TINK_VIP>"
    ```
 
 1. Manually set the public ssh key in `TinkerbellMachineConfig` `users[name=ec2-user].sshAuthorizedKeys`
