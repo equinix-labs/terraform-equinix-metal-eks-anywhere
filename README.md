@@ -75,7 +75,7 @@ The following tools will be needed on your local development environment where y
      ```sh
      for a in {1..2}; do
        metal device create --plan c3.small.x86 --metro da --hostname eksa-node-00$a \
-         --ipxe-script-url http://$TINK_VIP/ipxe/  --operating-system custom_ipxe
+         --ipxe-script-url http://$POOL_ADMIN/ipxe/  --operating-system custom_ipxe
      done
      ```
 
