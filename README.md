@@ -11,6 +11,7 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
  ## Known Issues (Investigations ongoing)
 
 * [#9](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/9) `systemctl restart networking` may complain that certain VLANs already exist. This doesn't always happen.
+* If nodes reboot they will not start up properly again due to a default boot disk issue. 
 
 ## Pre-requisites
 
