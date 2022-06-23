@@ -61,6 +61,7 @@ The following tools will be needed on your local development environment where y
      PUB_ADMIN=$(metal devices list  -o json  | jq -r '.[] | select(.hostname=="eksa-admin") | .ip_addresses [] | select(contains({"public":true,"address_family":4})) | .address')
      # POOL_VIP is the floating IPv4 public address assigned to the current lead kubernetes control plane
      POOL_VIP=$(python3 -c 'import ipaddress; print(str(ipaddress.ip_network("'${POOL_NW}'/'${POOL_NM}'").broadcast_address-1))')
+     TINK_VIP=$(python3 -c 'import ipaddress; print(str(ipaddress.ip_network("'${POOL_NW}'/'${POOL_NM}'").broadcast_address-2))')
      ```
 
 1. Create a Metal Gateway
@@ -74,7 +75,7 @@ The following tools will be needed on your local development environment where y
      ```sh
      for a in {1..2}; do
        metal device create --plan c3.small.x86 --metro da --hostname eksa-node-00$a \
-         --ipxe-script-url http://$POOL_ADMIN/ipxe/  --operating-system custom_ipxe
+         --ipxe-script-url http://$TINK_VIP/ipxe/  --operating-system custom_ipxe
      done
      ```
 
@@ -138,31 +139,11 @@ The following tools will be needed on your local development environment where y
       scp hardware.csv root@$PUB_ADMIN:/root
       ```
 
-1. Install eksctl-anywhere on eksa-admin
-    1. Define the NDA Password as an environment variable:
-
-       ```sh
-       echo -n "NDA Password: "
-       read -s NDA_PW
-       export NDA_PW
-       echo
-       ```
-
-    1. Fetch, unzip, and install the EKS-Anywhere (Beta) binary
-
-         ```sh
-         ssh -t root@$PUB_ADMIN <<EOS
-         wget -q https://eks-anywhere-beta.s3.amazonaws.com/baremetal/baremetal-bundle.zip
-         apt-get install unzip
-         unzip -P $NDA_PW baremetal-bundle.zip
-         cp baremetal-bundle/eksctl-anywhere /usr/local/bin
-         EOS
-         ```
-## Steps to run on eksa-admin
-
 We've now provided the `eksa-admin` machine with all of the variables and configuration needed in preparation.
 
-1. Login to eksa-admin with the `LC_POOL_ADMIN` variable defined
+## Steps to run on eksa-admin
+
+1. Login to eksa-admin with the `LC_POOL_ADMIN` and `LC_POOL_VIP` variable defined
 
    ```sh
    # SSH into eksa-admin. The special args and environment setting are just tricks to plumb $POOL_ADMIN and $POOL_VIP into the eksa-admin environment.
@@ -171,6 +152,17 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 
    > **Note**
    > The remaining steps assume you have logged into `eksa-admin` with the SSH command shown above.
+
+1. Install eksctl-anywhere on eksa-admin
+
+      ```sh
+      git clone https://github.com/aws/eks-anywhere
+      apt install make
+      snap install go --classic
+      cd eks-anywhere
+      make eks-a
+      mv bin/eksctl-anywhere /usr/local/bin
+      ```
 
 1. Install `kubectl` on eksa-admin:
 
