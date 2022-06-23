@@ -2,16 +2,15 @@
 
 > **Warning**
 > This README.md will serve as manual instructions for installing EKS-A Bare Metal on Equinix Metal.  These instructions are a work-in-progress. Once all steps are executed additional steps may be needed.
-
 > **Note**
 > Ignore the `.tf` files in this project for now. These instructions will offer copy+paste ready commands where possible to simplify the process. Terraform execution will come once the manual install is ironed out.
 
 Steps below align with EKS-A Beta instructions. While the steps below are intended to be complete, follow along with the EKS-A Beta Install guide for best results.
 
- ## Known Issues (Investigations ongoing)
+## Known Issues (Investigations ongoing)
 
 * [#9](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/9) `systemctl restart networking` may complain that certain VLANs already exist. This doesn't always happen.
-* If nodes reboot they will not start up properly again due to a default boot disk issue. 
+* [#12](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/12)If nodes reboot they will not start up properly again due to a default boot disk issue.
 
 ## Pre-requisites
 
