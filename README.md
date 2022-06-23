@@ -10,8 +10,6 @@ Steps below align with EKS-A Beta instructions. While the steps below are intend
 
  ## Known Issues (Investigations ongoing)
 
-* [#11](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/11) Sometimes the pxe boot server that the nodes boot from is setup using the wrong IP address. Preventing the kubernetes nodes from ever booting up. The only known workaround is to start over from scratch and hope it works this time. You can tell if you're having the issue if the nodes are trying to boot from 172.17.0.1.
-* [#10](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/10) The create command hangs on the "Creating new workload cluster" step. This appears to be due to the cluster-api-provider-tinkerbell process never completing. The cluster-api logs indicate they're waiting for a provider-id that they're not seeing for some reason.
 * [#9](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/9) `systemctl restart networking` may complain that certain VLANs already exist. This doesn't always happen.
 
 ## Pre-requisites
@@ -47,9 +45,6 @@ The following tools will be needed on your local development environment where y
      ```sh
      metal ip request --metro da --type public_ipv4 --quantity 16 --tags eksa
      ```
-
-     > **Note**
-     > IP reservations would ideally be created within the Metro, facility is used as a workaround to the CLI's limitations for now.
 
      These variables will be referred to in later steps in executable snippets to refer to specific addresses within the pool. The correct IP reservation is chosen by looking for and expecting a single IP reservation to have the "eksa" tag applied.
 
@@ -170,9 +165,10 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 1. Login to eksa-admin with the `LC_POOL_ADMIN` variable defined
 
    ```sh
-   # SSH into eksa-admin. The special args and environment setting are just tricks to plumb $POOL_ADMIN into the eksa-admin environment.
-   LC_POOL_ADMIN=$POOL_ADMIN ssh -o SendEnv=LC_POOL_ADMIN root@$PUB_ADMIN
+   # SSH into eksa-admin. The special args and environment setting are just tricks to plumb $POOL_ADMIN and $POOL_VIP into the eksa-admin environment.
+   LC_POOL_ADMIN=$POOL_ADMIN LC_POOL_VIP=$POOL_VIP ssh -o SendEnv=LC_POOL_ADMIN,LC_POOL_VIP root@$PUB_ADMIN
    ```
+
    > **Note**
    > The remaining steps assume you have logged into `eksa-admin` with the SSH command shown above.
 
@@ -185,23 +181,25 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    Version 1.23 matches the version used in the eks-anywhere repository.
 
    <details><summary>Alternatively, install via APT.</summary>
-   
+
    ```sh
    curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
    echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
    apt-get update
    apt-get install kubectl
    ```
+
    </details>
 1. Install Docker
 
     Run the docker install script:
 
     ```sh
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    get-docker.sh
+    curl -fsSL https://get.docker.com -o get-docker.sh 
+    chmod +x get-docker.sh
+    ./get-docker.sh
     ```
-    
+
     Alternatively, follow the instructions from <https://docs.docker.com/engine/install/ubuntu/>.
 
 1. Create EKS-A Cluster config:
@@ -218,22 +216,38 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 
 1. Manually set control-plane IP for `Cluster` resource in the config
 
+   ``` sh
+   echo $LC_POOL_VIP
+   ```
+
    ```yaml
    controlPlaneConfiguration:
     count: 1
     endpoint:
-      host: "${POOL_VIP}"
+      host: "<value of LC_POOL_VIP>"
    ```
 
 1. Manually set the `TinkerbellDatacenterConfig` resource `spec` in config:
 
+   ``` sh
+   echo $LC_POOL_ADMIN
+   ```
+
    ```yaml
    spec:
-     tinkerbellIP: "${POOL_ADMIN}"
+     tinkerbellIP: "<value of LC_POOL_ADMIN>"
    ```
 
 1. Manually set the public ssh key in `TinkerbellMachineConfig` `users[name=ec2-user].sshAuthorizedKeys`
    The SSH Key can be a locally generated on `eksa-admin` (`ssh-keygen -t rsa`) or an existing user key.
+
+   ```sh
+   ssh-keygen -t rsa
+   ```
+
+   ```sh
+   cat /root/.ssh/id_rsa.pub
+   ```
 
 1. Manually set the hardwareSelector for each TinkerbellMachineConfig.
 
@@ -257,10 +271,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 
    ```sh
    eksctl-anywhere create cluster --filename $CLUSTER_NAME.yaml \
-     --hardware-csv hardware.csv --tinkerbell-bootstrap-ip $LC_POOL_ADMIN \
-     --force-cleanup -v 9
+     --hardware-csv hardware.csv --tinkerbell-bootstrap-ip $LC_POOL_ADMIN
    ```
 
-   (This command can be rerun if errors are encountered)
-
-1. Reboot the two nodes. This is to force them attempt to iPXE boot from the tinkerbell stack that eksctl-anywhere command creates.
+1. When the command above indicates it's waiting for the control plane node, reboot the two nodes. This is to force them attempt to iPXE boot from the tinkerbell stack that eksctl-anywhere command creates.
