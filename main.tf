@@ -6,7 +6,7 @@ provider "equinix" {
 # Create a new VLAN in specified datacenter
 resource "equinix_metal_vlan" "provisioning_vlan" {
   description = "provisioning_vlan"
-  metro    = var.metro
+  metro       = var.metro
   project_id  = var.project_id
 }
 
@@ -58,7 +58,7 @@ resource "equinix_metal_device_network_type" "eksa_node_cp_network_type" {
 # Attach VLAN to eksa nodes
 resource "equinix_metal_port_vlan_attachment" "eksa_node_cp_vlan_attach" {
   count = 1
-  
+
   device_id = equinix_metal_device.eksa_node_cp[count.index].id
   port_name = "eth0"
   vlan_vnid = equinix_metal_vlan.provisioning_vlan.vxlan
@@ -98,7 +98,7 @@ resource "equinix_metal_device_network_type" "eksa_node_dp_network_type" {
 # Attach VLAN to eksa nodes
 resource "equinix_metal_port_vlan_attachment" "eksa_node_dp_vlan_attach" {
   count = 1
-  
+
   device_id = equinix_metal_device.eksa_node_dp[count.index].id
   port_name = "eth0"
   vlan_vnid = equinix_metal_vlan.provisioning_vlan.vxlan
@@ -139,11 +139,10 @@ resource "equinix_metal_device" "eksa_admin" {
   project_id       = var.project_id
   tags             = concat(var.tags, ["tink-provisioner"])
 
-  user_data = templatefile("${path.module}/setup.sh.tftpl", {
+  user_data = templatefile("${path.module}/setup.cloud-init.tftpl", {
     admin_ip  = local.pool_admin
     netmask   = local.pool_nm
     vlan_vnid = equinix_metal_vlan.provisioning_vlan.vxlan
-    cidr      = equinix_metal_reserved_ip_block.public_ips.cidr
   })
 
   depends_on = [equinix_metal_ssh_key.ssh_pub_key]
@@ -157,9 +156,9 @@ resource "equinix_metal_device_network_type" "eksa_admin_network_type" {
 
 # Attach VLAN to eksa-admin
 resource "equinix_metal_port_vlan_attachment" "eksa_admin_vlan_attach" {
-  device_id  = equinix_metal_device.eksa_admin.id
-  port_name  = "bond0"
-  vlan_vnid  = equinix_metal_vlan.provisioning_vlan.vxlan
+  device_id = equinix_metal_device.eksa_admin.id
+  port_name = "bond0"
+  vlan_vnid = equinix_metal_vlan.provisioning_vlan.vxlan
 
   depends_on = [equinix_metal_device_network_type.eksa_admin_network_type]
 }
@@ -168,7 +167,7 @@ resource "equinix_metal_port_vlan_attachment" "eksa_admin_vlan_attach" {
 ## Steps to run on eksa-admin ##
 ################################
 
-resource "null_resource" "setup_eks" {
+resource "null_resource" "wait_for_cloud_init" {
   connection {
     type        = "ssh"
     user        = "root"
@@ -176,15 +175,9 @@ resource "null_resource" "setup_eks" {
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
   }
 
-  provisioner "file" {
-    source      = "${path.module}/setup_eks.sh"
-    destination = "/tmp/setup_eks.sh"
-  }
-
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /tmp/setup_eks.sh",
-      "/tmp/setup_eks.sh",
+      "cloud-init status --wait"
     ]
   }
 }
@@ -193,7 +186,7 @@ resource "null_resource" "generate_hardware" {
   triggers = {
     ids = join(",", concat(local.eksa_nodes_cp_hw_info.*.id, local.eksa_nodes_dp_hw_info.*.id))
   }
-  
+
   connection {
     type        = "ssh"
     user        = "root"
@@ -202,7 +195,7 @@ resource "null_resource" "generate_hardware" {
   }
 
   provisioner "file" {
-    source = "${path.module}/generate_hw_csv.sh"
+    source      = "${path.module}/generate_hw_csv.sh"
     destination = "/tmp/generate_hw_csv.sh"
   }
 
@@ -212,8 +205,8 @@ resource "null_resource" "generate_hardware" {
       "/tmp/generate_hw_csv.sh ${join("^", local.eks_nodes_hw_info_str)}",
     ]
   }
-  
-  depends_on = [null_resource.setup_eks]
+
+  depends_on = [null_resource.wait_for_cloud_init]
 }
 
 
@@ -221,21 +214,21 @@ resource "null_resource" "create_cluster" {
   triggers = {
     ids = join(",", concat(local.eksa_nodes_cp_hw_info.*.id, local.eksa_nodes_dp_hw_info.*.id))
   }
-  
+
   connection {
     type        = "ssh"
     user        = "root"
     host        = equinix_metal_device.eksa_admin.network[0].address
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
   }
-  
+
   provisioner "file" {
-    content = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+    content     = chomp(tls_private_key.ssh_key_pair.private_key_pem)
     destination = "/root/.ssh/${local.ssh_key_name}"
   }
 
   provisioner "file" {
-    content = chomp(tls_private_key.ssh_key_pair.public_key_openssh)
+    content     = chomp(tls_private_key.ssh_key_pair.public_key_openssh)
     destination = "/root/.ssh/${local.ssh_key_name}.pub"
   }
 
@@ -249,7 +242,6 @@ resource "null_resource" "create_cluster" {
       "export PUB_SSH_KEY=$(< /root/.ssh/${local.ssh_key_name}.pub)",
       "eksctl-anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_CONFIG_FILE",
       "cp $CLUSTER_CONFIG_FILE $CLUSTER_CONFIG_FILE.orig",
-      "snap install yq",
       "yq e -i \"select(.kind == \\\"Cluster\\\").spec.controlPlaneConfiguration.endpoint.host |= \\\"$CONTROL_PLANE_VIP\\\"\" $CLUSTER_CONFIG_FILE",
       "yq e -i \"select(.kind == \\\"TinkerbellDatacenterConfig\\\").spec.tinkerbellIP |= \\\"$TINKERBELL_HOST_IP\\\"\" $CLUSTER_CONFIG_FILE",
       "yq e -i \"select(.kind == \\\"TinkerbellMachineConfig\\\").spec.users[].sshAuthorizedKeys[0] |= \\\"$PUB_SSH_KEY\\\"\" $CLUSTER_CONFIG_FILE",
