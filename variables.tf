@@ -1,6 +1,7 @@
 variable "metal_api_token" {
   description = "Equinix Metal user api token"
   type        = string
+  default     = null
 }
 
 variable "project_id" {
@@ -8,10 +9,16 @@ variable "project_id" {
   type        = string
 }
 
-variable "facility" {
-  description = "Packet facility to provision in"
+variable "cluster_name" {
   type        = string
-  default     = "sv15"
+  description = "Cluster name"
+  default     = "my-eksa-cluster"
+}
+
+variable "metro" {
+  description = "Equinix metro to provision in"
+  type        = string
+  default     = "sv"
 }
 
 variable "device_type" {
@@ -20,14 +27,8 @@ variable "device_type" {
   default     = "c3.small.x86"
 }
 
-variable "use_ssh_agent" {
-  type        = bool
-  description = "Use ssh agent to connect to provisioner machine"
-  default     = false
-}
-
-variable "ssh_private_key" {
-  type        = string
-  description = "ssh private key file to use"
-  default     = "~/.ssh/id_rsa"
+variable "tags" {
+  type        = list
+  description = "String list of common tags for Equinix resources"
+  default     = ["eksa", "terraform"]
 }
