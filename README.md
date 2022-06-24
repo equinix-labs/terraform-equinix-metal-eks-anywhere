@@ -157,13 +157,16 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 
       ```sh
       apt-get update
-      git clone https://github.com/aws/eks-anywhere;
-      apt-get install make;
-      snap install go --classic;
-      cd eks-anywhere;
-      make eks-a;
-      mv bin/eksctl-anywhere /usr/local/bin;
-      cd;
+      git clone https://github.com/aws/eks-anywhere
+      apt-get install make
+      ```
+
+      ```sh
+      snap install go --classic
+      cd eks-anywhere
+      make eks-a
+      mv bin/eksctl-anywhere /usr/local/bin
+      cd
       ```
 
 1. Install `kubectl` on eksa-admin:
