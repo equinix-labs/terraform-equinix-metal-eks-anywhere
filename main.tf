@@ -182,9 +182,9 @@ resource "null_resource" "wait_for_cloud_init" {
   }
 }
 
-resource "null_resource" "generate_hardware" {
+resource "null_resource" "create_cluster" {
   triggers = {
-    ids = join(",", concat(local.eksa_nodes_cp_hw_info.*.id, local.eksa_nodes_dp_hw_info.*.id))
+    ids = join(",", concat(equinix_metal_device.eksa_node_cp.*.id, lequinix_metal_device.eksa_node_dp.*.id))
   }
 
   connection {
@@ -195,31 +195,14 @@ resource "null_resource" "generate_hardware" {
   }
 
   provisioner "file" {
-    source      = "${path.module}/generate_hw_csv.sh"
-    destination = "/tmp/generate_hw_csv.sh"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /tmp/generate_hw_csv.sh",
-      "/tmp/generate_hw_csv.sh ${join("^", local.eks_nodes_hw_info_str)}",
-    ]
-  }
-
-  depends_on = [null_resource.wait_for_cloud_init]
-}
-
-
-resource "null_resource" "create_cluster" {
-  triggers = {
-    ids = join(",", concat(local.eksa_nodes_cp_hw_info.*.id, local.eksa_nodes_dp_hw_info.*.id))
-  }
-
-  connection {
-    type        = "ssh"
-    user        = "root"
-    host        = equinix_metal_device.eksa_admin.network[0].address
-    private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+    content  = templatefile("${path.module}/hardware.csv.tftpl", { 
+      nodes_cp = equinix_metal_device.eksa_node_cp
+      nodes_dp = equinix_metal_device.eksa_node_dp
+      nw_cidr  = local.pool_nw_cidr
+      gateway  = local.pool_gw
+      netmask  = local.pool_nm
+    })
+    destination = "/root/hardware.csv"
   }
 
   provisioner "file" {
@@ -254,7 +237,7 @@ resource "null_resource" "create_cluster" {
   }
 
   depends_on = [
-    null_resource.generate_hardware,
+    null_resource.wait_for_cloud_init,
     equinix_metal_port_vlan_attachment.eksa_admin_vlan_attach,
     equinix_metal_port_vlan_attachment.eksa_node_cp_vlan_attach,
     equinix_metal_port_vlan_attachment.eksa_node_dp_vlan_attach
