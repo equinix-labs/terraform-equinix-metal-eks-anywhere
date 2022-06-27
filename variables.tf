@@ -1,7 +1,6 @@
 variable "metal_api_token" {
   description = "Equinix Metal user api token"
   type        = string
-  default     = null
 }
 
 variable "project_id" {

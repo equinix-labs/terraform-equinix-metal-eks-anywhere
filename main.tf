@@ -189,6 +189,35 @@ resource "null_resource" "wait_for_cloud_init" {
   }
 }
 
+resource "null_resource" "reboot_nodes" {
+  triggers = {
+    ids = join(",", concat(equinix_metal_device.eksa_node_cp.*.id, equinix_metal_device.eksa_node_dp.*.id))
+  }
+
+  connection {
+    type        = "ssh"
+    user        = "root"
+    host        = equinix_metal_device.eksa_admin.network[0].address
+    private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/reboot_nodes.sh"
+    destination = "/root/reboot_nodes.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /root/reboot_nodes.sh",
+      "API_TOKEN=${var.metal_api_token} /root/reboot_nodes.sh ${self.triggers.ids} > reboot_nodes.log"
+    ]
+  }
+
+  depends_on = [
+    null_resource.wait_for_cloud_init,
+  ]
+}
+
 resource "null_resource" "create_cluster" {
   triggers = {
     ids = join(",", concat(equinix_metal_device.eksa_node_cp.*.id, equinix_metal_device.eksa_node_dp.*.id))
@@ -241,7 +270,7 @@ resource "null_resource" "create_cluster" {
       "yq e -i 'select(.kind == \"TinkerbellMachineConfig\").spec.hardwareSelector |= { \"type\": \"HW_TYPE\" }' $CLUSTER_CONFIG_FILE",
       "sed -i '0,/^\\([[:blank:]]*\\)type: HW_TYPE.*$/ s//\\1type: cp/' $CLUSTER_CONFIG_FILE",
       "sed -i '0,/^\\([[:blank:]]*\\)type: HW_TYPE.*$/ s//\\1type: dp/' $CLUSTER_CONFIG_FILE",
-      "eksctl-anywhere create cluster --filename $CLUSTER_CONFIG_FILE --hardware-csv hardware.csv --tinkerbell-bootstrap-ip ${local.pool_admin}"
+      "eksctl-anywhere create cluster --filename $CLUSTER_CONFIG_FILE --hardware-csv hardware.csv --tinkerbell-bootstrap-ip ${local.pool_admin} 2>&1 | tee -a /root/eksa-create-cluster.log",
     ]
   }
 
