@@ -1,0 +1,7 @@
+hostname,vendor,mac,ip_address,gateway,netmask,nameservers,disk,labels
+%{ for idx, node in nodes_cp ~}
+${node.hostname},Equinix,%{ for port in node.ports}%{ if port.name == "eth0"}${port.mac}%{ endif }%{ endfor },${cidrhost(nw_cidr, idx + 3)},${gateway},${netmask},8.8.8.8,/dev/sda,type=cp
+%{ endfor ~}
+%{ for idx, node in nodes_dp ~}
+${node.hostname},Equinix,%{ for port in node.ports}%{ if port.name == "eth0"}${port.mac}%{ endif }%{ endfor },${cidrhost(nw_cidr, length(nodes_cp) + idx + 3)},${gateway},${netmask},8.8.8.8,/dev/sda,type=dp
+%{ endfor ~}
