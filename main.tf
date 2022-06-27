@@ -34,10 +34,10 @@ resource "equinix_metal_gateway" "gw" {
 # Note that the ipxe-script-url doesn't actually get used in this process, we're just setting it
 # as it's a requirement for using the custom_ipxe operating system type.
 resource "equinix_metal_device" "eksa_node_cp" {
-  count = 1
+  count = var.cp_device_count
 
   hostname         = format("eksa-node-cp-%03d", count.index + 1)
-  plan             = var.device_type
+  plan             = var.cp_device_type
   metro            = var.metro
   operating_system = "custom_ipxe"
   ipxe_script_url  = "http://${local.pool_admin}/ipxe/"
@@ -49,7 +49,7 @@ resource "equinix_metal_device" "eksa_node_cp" {
 
 # Convert eksa nodes to Layer2-Unbonded (Layer2-Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names)
 resource "equinix_metal_device_network_type" "eksa_node_cp_network_type" {
-  count = 1
+  count = var.cp_device_count
 
   device_id = equinix_metal_device.eksa_node_cp[count.index].id
   type      = "layer2-individual"
@@ -57,7 +57,7 @@ resource "equinix_metal_device_network_type" "eksa_node_cp_network_type" {
 
 # Attach VLAN to eksa nodes
 resource "equinix_metal_port_vlan_attachment" "eksa_node_cp_vlan_attach" {
-  count = 1
+  count = var.cp_device_count
 
   device_id = equinix_metal_device.eksa_node_cp[count.index].id
   port_name = "eth0"
@@ -74,10 +74,10 @@ resource "equinix_metal_port_vlan_attachment" "eksa_node_cp_vlan_attach" {
 # Note that the ipxe-script-url doesn't actually get used in this process, we're just setting it
 # as it's a requirement for using the custom_ipxe operating system type.
 resource "equinix_metal_device" "eksa_node_dp" {
-  count = 1
+  count = var.dp_device_count
 
   hostname         = format("eksa-node-dp-%03d", count.index + 1)
-  plan             = var.device_type
+  plan             = var.dp_device_type
   metro            = var.metro
   operating_system = "custom_ipxe"
   ipxe_script_url  = "http://${local.pool_admin}/ipxe/"
@@ -89,7 +89,7 @@ resource "equinix_metal_device" "eksa_node_dp" {
 
 # Convert eksa nodes to Layer2-Unbonded (Layer2-Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names)
 resource "equinix_metal_device_network_type" "eksa_node_dp_network_type" {
-  count = 1
+  count = var.dp_device_count
 
   device_id = equinix_metal_device.eksa_node_dp[count.index].id
   type      = "layer2-individual"
@@ -97,7 +97,7 @@ resource "equinix_metal_device_network_type" "eksa_node_dp_network_type" {
 
 # Attach VLAN to eksa nodes
 resource "equinix_metal_port_vlan_attachment" "eksa_node_dp_vlan_attach" {
-  count = 1
+  count = var.dp_device_count
 
   device_id = equinix_metal_device.eksa_node_dp[count.index].id
   port_name = "eth0"
@@ -116,9 +116,16 @@ resource "tls_private_key" "ssh_key_pair" {
   rsa_bits  = 4096
 }
 
+# Generate random suffix to build ssh key name
+resource "random_string" "ssh_key_suffix" {
+  length  = 3
+  special = false
+  upper   = false
+}
+
 # Upload ssh_pub_key to Equinix Metal
 resource "equinix_metal_ssh_key" "ssh_pub_key" {
-  name       = var.cluster_name
+  name       = local.ssh_key_name
   public_key = chomp(tls_private_key.ssh_key_pair.public_key_openssh)
 }
 
@@ -132,7 +139,7 @@ resource "local_file" "ssh_private_key" {
 # Create an eksa-admin/tink-provisioner device
 resource "equinix_metal_device" "eksa_admin" {
   hostname         = "eksa-admin"
-  plan             = var.device_type
+  plan             = var.provisioner_device_type
   metro            = var.metro
   operating_system = "ubuntu_20_04"
   billing_cycle    = "hourly"
@@ -141,7 +148,7 @@ resource "equinix_metal_device" "eksa_admin" {
 
   user_data = templatefile("${path.module}/setup.cloud-init.tftpl", {
     admin_ip  = local.pool_admin
-    netmask   = local.pool_nm
+    netmask   = equinix_metal_reserved_ip_block.public_ips.netmask
     vlan_vnid = equinix_metal_vlan.provisioning_vlan.vxlan
   })
 
@@ -184,7 +191,7 @@ resource "null_resource" "wait_for_cloud_init" {
 
 resource "null_resource" "create_cluster" {
   triggers = {
-    ids = join(",", concat(equinix_metal_device.eksa_node_cp.*.id, lequinix_metal_device.eksa_node_dp.*.id))
+    ids = join(",", concat(equinix_metal_device.eksa_node_cp.*.id, equinix_metal_device.eksa_node_dp.*.id))
   }
 
   connection {
@@ -199,8 +206,8 @@ resource "null_resource" "create_cluster" {
       nodes_cp = equinix_metal_device.eksa_node_cp
       nodes_dp = equinix_metal_device.eksa_node_dp
       nw_cidr  = local.pool_nw_cidr
-      gateway  = local.pool_gw
-      netmask  = local.pool_nm
+      gateway  = equinix_metal_reserved_ip_block.public_ips.gateway
+      netmask  = equinix_metal_reserved_ip_block.public_ips.netmask
     })
     destination = "/root/hardware.csv"
   }
