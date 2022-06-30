@@ -59,6 +59,8 @@ The following tools will be needed on your local development environment where y
      POOL_ADMIN=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+1))')
      # PUB_ADMIN is the provisioned IPv4 public address of eks-admin which we can use with ssh
      PUB_ADMIN=$(metal devices list  -o json  | jq -r '.[] | select(.hostname=="eksa-admin") | .ip_addresses [] | select(contains({"public":true,"address_family":4})) | .address')
+     # PORT_ADMIN is the bond0 port of the eks-admin machine
+     PORT_ADMIN=$(metal devices list  -o json  | jq -r '.[] | select(.hostname=="eksa-admin") | .network_ports [] | select(.name == "bond0") | .id')
      # POOL_VIP is the floating IPv4 public address assigned to the current lead kubernetes control plane
      POOL_VIP=$(python3 -c 'import ipaddress; print(str(ipaddress.ip_network("'${POOL_NW}'/'${POOL_NM}'").broadcast_address-1))')
      TINK_VIP=$(python3 -c 'import ipaddress; print(str(ipaddress.ip_network("'${POOL_NW}'/'${POOL_NM}'").broadcast_address-2))')
@@ -81,8 +83,13 @@ The following tools will be needed on your local development environment where y
 
    Note that the `ipxe-script-url` doesn't actually get used in this process, we're just setting it as it's a requirement for using the custom_ipxe operating system type.
 
-1. Convert the `eksa-admin` node to Hybrid-Bonded connected to the VLAN.
-   <https://metal.equinix.com/developers/docs/layer2-networking/hybrid-bonded-mode/>
+1. Add the vlan to the eks-admin bond0 port:
+
+      ```sh
+      metal port vlan -i $PORT_ADMIN -a $VLAN_ID
+      ```
+
+      Configure the layer 2 vlan network on eks-admin with this snippet:
 
       ```sh
       ssh root@$PUB_ADMIN tee -a /etc/network/interfaces << EOS
@@ -96,15 +103,30 @@ The following tools will be needed on your local development environment where y
       EOS
       ```
 
-   This snippet configures the VLAN address in `/etc/network/interfaces` on eksa-admin.
+      Activate the layer 2 vlan network with this command:
 
-   The following will put that configuration into use:
+      ```sh
+      ssh root@$PUB_ADMIN systemctl restart networking
+      ```
 
-   `ssh root@$PUB_ADMIN systemctl restart networking`
+1. Convert `eksa-node-*` 's network ports to Layer2-Unbonded and attach to the VLAN.
 
-1. Convert `eksa-node-*` to Layer2-Unbonded (not `eksa-admin`)
-   Using the UI: Convert nodes to [`Layer2-Unbonded`](https://metal.equinix.com/developers/docs/layer2-networking/layer2-mode/#converting-to-layer-2-unbonded-mode) (Layer2-Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names).
-   (TODO: Bring this functionality to the CLI <https://github.com/equinix/metal-cli/issues/206>)
+      ```sh
+      node_ids=$(metal devices list -o json | jq -r '.[] | select(.hostname | startswith("eksa-node")) | .id')
+
+      i=1 # We will increment "i" for the eksa-node-* nodes. "1" represents the eksa-admin node.
+
+      for id in $(echo $node_ids); do
+         # Configure only the first node as a control-panel node
+         if [ "$i" = 1 ]; then TYPE=cp; else TYPE=dp; fi; # change to 3 for HA
+         NODENAME="eks-node-00$i"
+         let i++
+         BOND0_PORT=$(metal devices get -i $id -o json  | jq -r '.network_ports [] | select(.name == "bond0") | .id')
+         ETH0_PORT=$(metal devices get -i $id -o json  | jq -r '.network_ports [] | select(.name == "eth0") | .id')
+         metal port convert -i $BOND0_PORT --layer2 --bonded=false --force
+         metal port vlan -i $ETH0_PORT -a $VLAN_ID
+      done
+      ```
 
 1. Capture the MAC Addresses and create `hardware.csv` file on `eks-admin` in `/root/` (run this on the host with metal cli on it):
    1. Create the CSV Header:
