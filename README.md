@@ -1,25 +1,47 @@
 # EKS-A Baremetal on Equinix Metal
 
-> **Warning**
-> This README.md will serve as manual instructions for installing EKS-A Bare Metal on Equinix Metal.  These instructions are a work-in-progress. Once all steps are executed additional steps may be needed.
+## Using Terraform
+
+With your [Equinix Metal account, project, and API token](https://metal.equinix.com/developers/docs/accounts/users/), you can use Terraform v1+ to install a proof-of-concept demonstration environment for EKS-A on Baremetal. Simply define `metal_api_token` and `project_id` in a `terraform.tfvars` file and run `terraform apply`.  See `variables.tf` for additional settings.
+
+Once complete, you'll see the following output:
+
+```text
+$ terraform apply
+... (~12m later)
+Apply complete! Resources: 19 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+eksa_admin_ip = "203.0.113.3"
+eksa_admin_ssh_key = "/Users/username/.ssh/my-eksa-cluster-xed"
+eksa_admin_ssh_user = "root"
+eksa_nodes_sos = tomap({
+  "eksa-node-cp-001" = "b0e1426d-4d9e-4d01-bd5c-54065df61d67@sos.sv15.platformequinix.com"
+  "eksa-node-dp-001" = "84ffa9c7-84ce-46eb-97ff-2ae310fbb360@sos.sv15.platformequinix.com"
+})
+```
+
+## Manual Installation
+
 > **Note**
-> Ignore the `.tf` files in this project for now. These instructions will offer copy+paste ready commands where possible to simplify the process. Terraform execution will come once the manual install is ironed out.
+> This section will serve as manual instructions for installing EKS-A Bare Metal on Equinix Metal. These instructions will offer copy+paste ready commands where possible to simplify the process.  These instructions are a work-in-progress, refer to the [open issues](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues) and please open issues if you encounter something not represented there. Once all steps are executed additional steps may be needed.
 
-Steps below align with EKS-A Beta instructions. While the steps below are intended to be complete, follow along with the EKS-A Beta Install guide for best results.
+Steps below align with [EKS-A Beta instructions](https://aws.amazon.com/blogs/containers/getting-started-with-eks-anywhere-on-bare-metal/). While the steps below are intended to be complete, follow along with the EKS-A Install guide for best results.
 
-## Known Issues (Investigations ongoing)
+### Known Issues (Investigations ongoing)
 
 * [#9](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/9) `systemctl restart networking` may complain that certain VLANs already exist. This doesn't always happen.
 * [#12](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/12)If nodes reboot they will not start up properly again due to a default boot disk issue.
 
-## Pre-requisites
+### Pre-requisites
 
 The following tools will be needed on your local development environment where you will be running most of the commands in this guide.
 
 * jq
-* [metal-cli](https://github.com/equinix/metal-cli) (v0.8.0+)
+* [metal-cli](https://github.com/equinix/metal-cli) (v0.9.0+)
 
-## Steps to run locally and in the Equinix Metal Console
+### Steps to run locally and in the Equinix Metal Console
 
 1. Create an EKS-A Admin machine:
    Using the [metal-cli](https://github.com/equinix/metal-cli):
@@ -163,7 +185,7 @@ The following tools will be needed on your local development environment where y
 
 We've now provided the `eksa-admin` machine with all of the variables and configuration needed in preparation.
 
-## Steps to run on eksa-admin
+### Steps to run on eksa-admin
 
 1. Login to eksa-admin with the `LC_POOL_ADMIN` and `LC_POOL_VIP` variable defined
 
