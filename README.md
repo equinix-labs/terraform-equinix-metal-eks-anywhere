@@ -1,5 +1,16 @@
 # EKS-A Baremetal on Equinix Metal
 
+[![Experimental](https://img.shields.io/badge/Stability-Experimental-red.svg)](https://github.com/equinix-labs/standards#about-uniform-standards)
+[![terraform](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/actions/workflows/integration.yaml/badge.svg)](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/actions/workflows/integration.yaml)
+
+
+> **[Experimental](https://github.com/equinix-labs/equinix-labs/blob/main/experimental-statement.md)**
+> This project is experimental and a work in progress. Use at your own risk and do not expect thorough support!
+
+This project deploys EKS-A Anywhere on Baremetal on Equinix Metal using the minimum requirements.
+
+See <https://aws.amazon.com/blogs/containers/getting-started-with-eks-anywhere-on-bare-metal/> for more information about EKS-A on Bare Metal.
+
 ## Using Terraform
 
 With your [Equinix Metal account, project, and API token](https://metal.equinix.com/developers/docs/accounts/users/), you can use Terraform v1+ to install a proof-of-concept demonstration environment for EKS-A on Baremetal. Simply define `metal_api_token` and `project_id` in a `terraform.tfvars` file and run `terraform apply`.  See `variables.tf` for additional settings.
@@ -40,9 +51,10 @@ eksa-node-dp-001   Ready    <none>                 5m30s   v1.22.10-eks-7dc61e8
 ## Manual Installation
 
 > **Note**
-> This section will serve as manual instructions for installing EKS-A Bare Metal on Equinix Metal. These instructions will offer copy+paste ready commands where possible to simplify the process.  These instructions are a work-in-progress, refer to the [open issues](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues) and please open issues if you encounter something not represented there. Once all steps are executed additional steps may be needed.
+> This section will serve as manual instructions for installing EKS-A Bare Metal on Equinix Metal. The Terraform install above performs all of these steps for you.
+> These instructions offer a step-by-step install with copy+paste commands that simplify the process.  Refer to the [open issues](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues) and please open issues if you encounter something not represented there.
 
-Steps below align with [EKS-A on Baremetanl instructions](https://aws.amazon.com/blogs/containers/getting-started-with-eks-anywhere-on-bare-metal/). While the steps below are intended to be complete, follow along with the EKS-A Install guide for best results.
+Steps below align with [EKS-A on Bare Metal instructions](https://anywhere.eks.amazonaws.com/docs/reference/baremetal/). While the steps below are intended to be complete, follow along with the EKS-A Install guide for best results.
 
 ### Known Issues (Investigations ongoing)
 
