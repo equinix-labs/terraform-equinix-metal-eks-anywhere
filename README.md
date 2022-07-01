@@ -31,7 +31,7 @@ SSH into the EKS-A Admin node and follow the EKS-A on Baremetal instructions to 
 > **Note**
 > This section will serve as manual instructions for installing EKS-A Bare Metal on Equinix Metal. These instructions will offer copy+paste ready commands where possible to simplify the process.  These instructions are a work-in-progress, refer to the [open issues](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues) and please open issues if you encounter something not represented there. Once all steps are executed additional steps may be needed.
 
-Steps below align with [EKS-A Beta instructions](https://aws.amazon.com/blogs/containers/getting-started-with-eks-anywhere-on-bare-metal/). While the steps below are intended to be complete, follow along with the EKS-A Install guide for best results.
+Steps below align with [EKS-A on Baremetanl instructions](https://aws.amazon.com/blogs/containers/getting-started-with-eks-anywhere-on-bare-metal/). While the steps below are intended to be complete, follow along with the EKS-A Install guide for best results.
 
 ### Known Issues (Investigations ongoing)
 
