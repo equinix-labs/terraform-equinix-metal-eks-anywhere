@@ -4,6 +4,8 @@
 
 With your [Equinix Metal account, project, and API token](https://metal.equinix.com/developers/docs/accounts/users/), you can use Terraform v1+ to install a proof-of-concept demonstration environment for EKS-A on Baremetal. Simply define `metal_api_token` and `project_id` in a `terraform.tfvars` file and run `terraform apply`.  See `variables.tf` for additional settings.
 
+Terraform will create an Equinix Metal VLAN, IP Reservation, and Equinix Metal servers to act as the EKS-A Admin node and worker devices. Terraform will create the initial `hardware.csv` and register this with the `eks-anywhere` CLI to create the cluster. The worker nodes will be provisioned through Tinkerbell to act as a control-plane node and a worker-node.
+
 Once complete, you'll see the following output:
 
 ```text
@@ -21,6 +23,8 @@ eksa_nodes_sos = tomap({
   "eksa-node-dp-001" = "84ffa9c7-84ce-46eb-97ff-2ae310fbb360@sos.sv15.platformequinix.com"
 })
 ```
+
+SSH into the EKS-A Admin node and follow the EKS-A on Baremetal instructions to continue within the Kubernetes environment.
 
 ## Manual Installation
 
