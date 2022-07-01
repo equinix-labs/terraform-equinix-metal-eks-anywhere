@@ -8,7 +8,7 @@ Terraform will create an Equinix Metal VLAN, IP Reservation, and Equinix Metal s
 
 Once complete, you'll see the following output:
 
-```text
+```sh
 $ terraform apply
 ... (~12m later)
 Apply complete! Resources: 19 added, 0 changed, 0 destroyed.
@@ -25,6 +25,17 @@ eksa_nodes_sos = tomap({
 ```
 
 SSH into the EKS-A Admin node and follow the EKS-A on Baremetal instructions to continue within the Kubernetes environment.
+
+```sh
+ssh -i $(terraform output -json | jq -r .eksa_admin_ssh_key.value) root@$(terraform output -json | jq -r .eksa_admin_ip.value)
+```
+
+```sh
+root@eksa-admin:~# KUBECONFIG=/root/my-eksa-cluster/my-eksa-cluster-eks-a-cluster.kubeconfig kubectl  get nodes
+NAME               STATUS   ROLES                  AGE     VERSION
+eksa-node-cp-001   Ready    control-plane,master   7m56s   v1.22.10-eks-7dc61e8
+eksa-node-dp-001   Ready    <none>                 5m30s   v1.22.10-eks-7dc61e8
+```
 
 ## Manual Installation
 
