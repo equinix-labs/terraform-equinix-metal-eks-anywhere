@@ -13,7 +13,7 @@ See <https://aws.amazon.com/blogs/containers/getting-started-with-eks-anywhere-o
 
 ## Using Terraform
 
-With your [Equinix Metal account, project, and API token](https://metal.equinix.com/developers/docs/accounts/users/), you can use Terraform v1+ to install a proof-of-concept demonstration environment for EKS-A on Baremetal. Simply define `metal_api_token` and `project_id` in a `terraform.tfvars` file and run `terraform apply`.  See `variables.tf` for additional settings.
+With your [Equinix Metal account, project, and API token](https://metal.equinix.com/developers/docs/accounts/users/), you can use [Terraform v1+](https://learn.hashicorp.com/tutorials/terraform/install-cli) to install a proof-of-concept demonstration environment for EKS-A on Baremetal. Simply define `metal_api_token` and `project_id` in a `terraform.tfvars` file and run `terraform apply`.  See `variables.tf` for additional settings.
 
 Terraform will create an Equinix Metal VLAN, IP Reservation, and Equinix Metal servers to act as the EKS-A Admin node and worker devices. Terraform will create the initial `hardware.csv` and register this with the `eks-anywhere` CLI to create the cluster. The worker nodes will be provisioned through Tinkerbell to act as a control-plane node and a worker-node.
 
