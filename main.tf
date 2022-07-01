@@ -231,7 +231,7 @@ resource "null_resource" "create_cluster" {
   }
 
   provisioner "file" {
-    content  = templatefile("${path.module}/hardware.csv.tftpl", { 
+    content = templatefile("${path.module}/hardware.csv.tftpl", {
       nodes_cp = equinix_metal_device.eksa_node_cp
       nodes_dp = equinix_metal_device.eksa_node_dp
       nw_cidr  = local.pool_nw_cidr
@@ -259,6 +259,7 @@ resource "null_resource" "create_cluster" {
       "export CONTROL_PLANE_VIP=${local.pool_vip}",
       "export CLUSTER_CONFIG_FILE=$CLUSTER_NAME.yaml",
       "export PUB_SSH_KEY=\"$(cat /root/.ssh/${local.ssh_key_name}.pub)\"",
+      "chmod 400 /root/.ssh/${local.ssh_key_name}.pub",
       "eksctl-anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_CONFIG_FILE",
       "cp $CLUSTER_CONFIG_FILE $CLUSTER_CONFIG_FILE.orig",
       "yq e -i \"select(.kind == \\\"Cluster\\\").spec.controlPlaneConfiguration.endpoint.host |= \\\"$CONTROL_PLANE_VIP\\\"\" $CLUSTER_CONFIG_FILE",
