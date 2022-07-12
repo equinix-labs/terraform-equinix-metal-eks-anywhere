@@ -166,9 +166,6 @@ The following tools will be needed on your local development environment where y
       i=1 # We will increment "i" for the eksa-node-* nodes. "1" represents the eksa-admin node.
 
       for id in $(echo $node_ids); do
-         # Configure only the first node as a control-panel node
-         if [ "$i" = 1 ]; then TYPE=cp; else TYPE=dp; fi; # change to 3 for HA
-         NODENAME="eks-node-00$i"
          let i++
          BOND0_PORT=$(metal devices get -i $id -o json  | jq -r '.network_ports [] | select(.name == "bond0") | .id')
          ETH0_PORT=$(metal devices get -i $id -o json  | jq -r '.network_ports [] | select(.name == "eth0") | .id')
