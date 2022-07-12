@@ -3,7 +3,6 @@
 [![Experimental](https://img.shields.io/badge/Stability-Experimental-red.svg)](https://github.com/equinix-labs/standards#about-uniform-standards)
 [![terraform](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/actions/workflows/integration.yaml/badge.svg)](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/actions/workflows/integration.yaml)
 
-
 > **[Experimental](https://github.com/equinix-labs/equinix-labs/blob/main/experimental-statement.md)**
 > This project is experimental and a work in progress. Use at your own risk and do not expect thorough support!
 
@@ -59,7 +58,6 @@ Steps below align with [EKS-A on Bare Metal instructions](https://anywhere.eks.a
 ### Known Issues (Investigations ongoing)
 
 * [#9](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/9) `systemctl restart networking` may complain that certain VLANs already exist. This doesn't always happen.
-* [#12](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/12)If nodes reboot they will not start up properly again due to a default boot disk issue.
 
 ### Pre-requisites
 
@@ -345,4 +343,13 @@ We've now provided the `eksa-admin` machine with all of the variables and config
      --hardware-csv hardware.csv --tinkerbell-bootstrap-ip $LC_POOL_ADMIN
    ```
 
-1. When the command above indicates it's waiting for the control plane node, reboot the two nodes. This is to force them attempt to iPXE boot from the tinkerbell stack that eksctl-anywhere command creates.
+### Steps to run locally while eksctl-anywhere is creating the cluster
+
+1. When the command above indicates it's waiting for the control plane node, reboot the two nodes. This is to force them attempt to iPXE boot from the tinkerbell stack that eksctl-anywhere command creates. You can use this command to automate it, but you'll need to be back on the original host.
+
+   ```sh
+   node_ids=$(metal devices list -o json | jq -r '.[] | select(.hostname | startswith("eksa-node")) | .id')
+   for id in $(echo $node_ids); do
+      metal device reboot -i $id
+   done
+   ```
