@@ -242,24 +242,21 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    > **Note**
    > The remaining steps assume you have logged into `eksa-admin` with the SSH command shown above.
 
-1. [Install `eksctl-anywhere`](https://anywhere.eks.amazonaws.com/docs/getting-started/install/#install-eks-anywhere-cli-tools) on eksa-admin.
+1. [Install `eksctl` and the `eksctl-anywhere` plugin](https://anywhere.eks.amazonaws.com/docs/getting-started/install/#install-eks-anywhere-cli-tools) on eksa-admin.
 
    ```sh
-   # eksctl-anywhere plugin for eksctl. this can be run standalone.
+   curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
+      --silent --location \
+      | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin/
+   ```
+
+   ```sh
    export EKSA_RELEASE="0.10.1" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=15
    curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}/artifacts/eks-a/v${EKSA_RELEASE}/${OS}/amd64/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" \
       --silent --location \
       | tar xz ./eksctl-anywhere
    sudo mv ./eksctl-anywhere /usr/local/bin/
-   ```
-
-   ```sh
-   # eksctl is not strictly required for this guide, but can be expected
-   # for `eksctl anywhere` commands you may find in other guides.
-   curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
-      --silent --location \
-      | tar xz -C /tmp
-   sudo mv /tmp/eksctl /usr/local/bin/
    ```
 
 1. Install `kubectl` on eksa-admin:
@@ -298,7 +295,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    export TINKERBELL_HOST_IP=$LC_TINK_VIP
    export CLUSTER_NAME="${USER}-${RANDOM}"
    export TINKERBELL_PROVIDER=true
-   eksctl-anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_NAME.yaml
+   eksctl anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_NAME.yaml
    ```
 
    > **Note**
@@ -366,13 +363,13 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 1. Create an EKS-A Cluster. Double check and be sure `$LC_POOL_ADMIN` and `$CLUSTER_NAME` are set correctly before running this (they were passed through SSH or otherwise defined in previous steps). Otherwise manually set them!
 
    ```sh
-   eksctl-anywhere create cluster --filename $CLUSTER_NAME.yaml \
+   eksctl anywhere create cluster --filename $CLUSTER_NAME.yaml \
      --hardware-csv hardware.csv --tinkerbell-bootstrap-ip $LC_POOL_ADMIN
    ```
 
-### Steps to run locally while eksctl-anywhere is creating the cluster
+### Steps to run locally while `eksctl anywhere` is creating the cluster
 
-1. When the command above indicates it's waiting for the control plane node, reboot the two nodes. This is to force them attempt to iPXE boot from the tinkerbell stack that eksctl-anywhere command creates. You can use this command to automate it, but you'll need to be back on the original host.
+1. When the command above indicates it's waiting for the control plane node, reboot the two nodes. This is to force them attempt to iPXE boot from the tinkerbell stack that `eksctl anywhere` command creates. You can use this command to automate it, but you'll need to be back on the original host.
 
    ```sh
    node_ids=$(metal devices list -o json | jq -r '.[] | select(.hostname | startswith("eksa-node")) | .id')
