@@ -20,9 +20,20 @@ EKS-A requires UEFI booting, which is supported by the following Equinix Metal O
 
 ## Using Terraform
 
-With your [Equinix Metal account, project, and API token](https://metal.equinix.com/developers/docs/accounts/users/), you can use [Terraform v1+](https://learn.hashicorp.com/tutorials/terraform/install-cli) to install a proof-of-concept demonstration environment for EKS-A on Baremetal. Simply define `metal_api_token` and `project_id` in a `terraform.tfvars` file and run `terraform apply`.  See `variables.tf` for additional settings.
+With your [Equinix Metal account, project, and a **User** API token](https://metal.equinix.com/developers/docs/accounts/users/), you can use [Terraform v1+](https://learn.hashicorp.com/tutorials/terraform/install-cli) to install a proof-of-concept demonstration environment for EKS-A on Baremetal. 
 
-Terraform will create an Equinix Metal VLAN, IP Reservation, and Equinix Metal servers to act as the EKS-A Admin node and worker devices. Terraform will create the initial `hardware.csv` and register this with the `eks-anywhere` CLI to create the cluster. The worker nodes will be provisioned through Tinkerbell to act as a control-plane node and a worker-node.
+Create a [`terraform.tfvars` file](https://www.terraform.io/language/values/variables#assigning-values-to-root-module-variables) in the root of this project with `metal_api_token` and `project_id` defined. These are the required variables needed to run `terraform apply`.  See `variables.tf` for additional settings that you may wish to customize.
+
+```ini
+# terraform.fvars
+metal_api_token="...your Metal User API Token here..."
+project_id="...your Metal Project API Token here..."
+```
+
+> **Note**
+> Project API Tokens can not be used to access some Gateway features used by this project. A User API Token is required.
+
+Terraform will create an Equinix Metal VLAN, Metal Gateway, IP Reservation, and Equinix Metal servers to act as the EKS-A Admin node and worker devices. Terraform will also create the initial `hardware.csv` with the details of each server and register this with the `eks-anywhere` CLI to create the cluster. The worker nodes will be provisioned through Tinkerbell to act as a control-plane node and a worker-node.
 
 Once complete, you'll see the following output:
 
