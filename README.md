@@ -13,6 +13,7 @@ See <https://aws.amazon.com/blogs/containers/getting-started-with-eks-anywhere-o
 ## Compatible Plans
 
 EKS-A requires UEFI booting, which is supported by the following Equinix Metal On Demand plans:
+
 * m3.small.x86
 * m3.large.x86
 * n3.xlarge.x86
@@ -20,9 +21,20 @@ EKS-A requires UEFI booting, which is supported by the following Equinix Metal O
 
 ## Using Terraform
 
-With your [Equinix Metal account, project, and API token](https://metal.equinix.com/developers/docs/accounts/users/), you can use [Terraform v1+](https://learn.hashicorp.com/tutorials/terraform/install-cli) to install a proof-of-concept demonstration environment for EKS-A on Baremetal. Simply define `metal_api_token` and `project_id` in a `terraform.tfvars` file and run `terraform apply`.  See `variables.tf` for additional settings.
+With your [Equinix Metal account, project, and a **User** API token](https://metal.equinix.com/developers/docs/accounts/users/), you can use [Terraform v1+](https://learn.hashicorp.com/tutorials/terraform/install-cli) to install a proof-of-concept demonstration environment for EKS-A on Baremetal. 
 
-Terraform will create an Equinix Metal VLAN, IP Reservation, and Equinix Metal servers to act as the EKS-A Admin node and worker devices. Terraform will create the initial `hardware.csv` and register this with the `eks-anywhere` CLI to create the cluster. The worker nodes will be provisioned through Tinkerbell to act as a control-plane node and a worker-node.
+Create a [`terraform.tfvars` file](https://www.terraform.io/language/values/variables#assigning-values-to-root-module-variables) in the root of this project with `metal_api_token` and `project_id` defined. These are the required variables needed to run `terraform apply`.  See `variables.tf` for additional settings that you may wish to customize.
+
+```ini
+# terraform.fvars
+metal_api_token="...your Metal User API Token here..."
+project_id="...your Metal Project API Token here..."
+```
+
+> **Note**
+> Project API Tokens can not be used to access some Gateway features used by this project. A User API Token is required.
+
+Terraform will create an Equinix Metal VLAN, Metal Gateway, IP Reservation, and Equinix Metal servers to act as the EKS-A Admin node and worker devices. Terraform will also create the initial `hardware.csv` with the details of each server and register this with the `eks-anywhere` CLI to create the cluster. The worker nodes will be provisioned through Tinkerbell to act as a control-plane node and a worker-node.
 
 Once complete, you'll see the following output:
 
@@ -63,14 +75,17 @@ eksa-node-dp-001   Ready    <none>                 5m30s   v1.22.10-eks-7dc61e8
 
 Steps below align with [EKS-A on Bare Metal instructions](https://anywhere.eks.amazonaws.com/docs/reference/baremetal/). While the steps below are intended to be complete, follow along with the EKS-A Install guide for best results.
 
-### Known Issues (Investigations ongoing)
+### Known Issues
 
-* [#9](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/9) `systemctl restart networking` may complain that certain VLANs already exist. This doesn't always happen.
+_None Currently_.
+
+If you run into something unexpected, after [checking the open issues](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues), [open a new issue reporting your experience](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/new).
 
 ### Pre-requisites
 
 The following tools will be needed on your local development environment where you will be running most of the commands in this guide.
 
+* A Unix-like environment (Linux, OSX, [Windows WSL](https://docs.microsoft.com/en-us/windows/wsl/install))
 * [jq](https://stedolan.github.io/jq/download/)
 * [metal-cli](https://github.com/equinix/metal-cli) (v0.9.0+)
 
@@ -227,21 +242,25 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    > **Note**
    > The remaining steps assume you have logged into `eksa-admin` with the SSH command shown above.
 
-1. Install eksctl-anywhere on eksa-admin
+1. [Install `eksctl-anywhere`](https://anywhere.eks.amazonaws.com/docs/getting-started/install/#install-eks-anywhere-cli-tools) on eksa-admin.
 
-      ```sh
-      apt-get update
-      git clone https://github.com/aws/eks-anywhere
-      apt-get install make
-      ```
+   ```sh
+   # eksctl-anywhere plugin for eksctl. this can be run standalone.
+   export EKSA_RELEASE="0.10.1" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=15
+   curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}/artifacts/eks-a/v${EKSA_RELEASE}/${OS}/amd64/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" \
+      --silent --location \
+      | tar xz ./eksctl-anywhere
+   sudo mv ./eksctl-anywhere /usr/local/bin/
+   ```
 
-      ```sh
-      snap install go --classic
-      cd eks-anywhere
-      make eks-a
-      mv bin/eksctl-anywhere /usr/local/bin
-      cd
-      ```
+   ```sh
+   # eksctl is not strictly required for this guide, but can be expected
+   # for `eksctl anywhere` commands you may find in other guides.
+   curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
+      --silent --location \
+      | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin/
+   ```
 
 1. Install `kubectl` on eksa-admin:
 
