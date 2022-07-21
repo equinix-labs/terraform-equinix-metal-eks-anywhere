@@ -13,6 +13,7 @@ See <https://aws.amazon.com/blogs/containers/getting-started-with-eks-anywhere-o
 ## Compatible Plans
 
 EKS-A requires UEFI booting, which is supported by the following Equinix Metal On Demand plans:
+
 * m3.small.x86
 * m3.large.x86
 * n3.xlarge.x86
@@ -74,9 +75,11 @@ eksa-node-dp-001   Ready    <none>                 5m30s   v1.22.10-eks-7dc61e8
 
 Steps below align with [EKS-A on Bare Metal instructions](https://anywhere.eks.amazonaws.com/docs/reference/baremetal/). While the steps below are intended to be complete, follow along with the EKS-A Install guide for best results.
 
-### Known Issues (Investigations ongoing)
+### Known Issues
 
-* [#9](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/9) `systemctl restart networking` may complain that certain VLANs already exist. This doesn't always happen.
+_None Currently_.
+
+If you run into something unexpected, after [checking the open issues](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues), [open a new issue reporting your experience](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/new).
 
 ### Pre-requisites
 
@@ -250,8 +253,8 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    ```
 
    ```sh
-   # eksctl is not strictly required for this install, but will be needed for
-   # "eksctl anywhere" commands you may find in other guides.
+   # eksctl is not strictly required for this guide, but can be expected
+   # for `eksctl anywhere` commands you may find in other guides.
    curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
       --silent --location \
       | tar xz -C /tmp
