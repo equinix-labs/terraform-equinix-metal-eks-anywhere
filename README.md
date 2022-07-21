@@ -238,21 +238,25 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    > **Note**
    > The remaining steps assume you have logged into `eksa-admin` with the SSH command shown above.
 
-1. Install eksctl-anywhere on eksa-admin
+1. [Install `eksctl-anywhere`](https://anywhere.eks.amazonaws.com/docs/getting-started/install/#install-eks-anywhere-cli-tools) on eksa-admin.
 
-      ```sh
-      apt-get update
-      git clone https://github.com/aws/eks-anywhere
-      apt-get install make
-      ```
+   ```sh
+   # eksctl-anywhere plugin for eksctl. this can be run standalone.
+   export EKSA_RELEASE="0.10.1" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=15
+   curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}/artifacts/eks-a/v${EKSA_RELEASE}/${OS}/amd64/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" \
+      --silent --location \
+      | tar xz ./eksctl-anywhere
+   sudo mv ./eksctl-anywhere /usr/local/bin/
+   ```
 
-      ```sh
-      snap install go --classic
-      cd eks-anywhere
-      make eks-a
-      mv bin/eksctl-anywhere /usr/local/bin
-      cd
-      ```
+   ```sh
+   # eksctl is not strictly required for this install, but will be needed for
+   # "eksctl anywhere" commands you may find in other guides.
+   curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
+      --silent --location \
+      | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin/
+   ```
 
 1. Install `kubectl` on eksa-admin:
 
