@@ -260,7 +260,7 @@ resource "null_resource" "create_cluster" {
       "export CLUSTER_CONFIG_FILE=$CLUSTER_NAME.yaml",
       "export PUB_SSH_KEY=\"$(cat /root/.ssh/${local.ssh_key_name}.pub)\"",
       "chmod 400 /root/.ssh/${local.ssh_key_name}.pub",
-      "eksctl-anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_CONFIG_FILE",
+      "eksctl anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_CONFIG_FILE",
       "cp $CLUSTER_CONFIG_FILE $CLUSTER_CONFIG_FILE.orig",
       "yq e -i \"select(.kind == \\\"Cluster\\\").spec.controlPlaneConfiguration.endpoint.host |= \\\"$CONTROL_PLANE_VIP\\\"\" $CLUSTER_CONFIG_FILE",
       "yq e -i 'select(.kind == \"Cluster\").spec.controlPlaneConfiguration.count |= ${var.cp_device_count}' $CLUSTER_CONFIG_FILE",
@@ -271,7 +271,7 @@ resource "null_resource" "create_cluster" {
       "yq e -i 'select(.kind == \"TinkerbellMachineConfig\").spec.hardwareSelector |= { \"type\": \"HW_TYPE\" }' $CLUSTER_CONFIG_FILE",
       "sed -i '0,/^\\([[:blank:]]*\\)type: HW_TYPE.*$/ s//\\1type: cp/' $CLUSTER_CONFIG_FILE",
       "sed -i '0,/^\\([[:blank:]]*\\)type: HW_TYPE.*$/ s//\\1type: dp/' $CLUSTER_CONFIG_FILE",
-      "eksctl-anywhere create cluster --filename $CLUSTER_CONFIG_FILE --hardware-csv hardware.csv --tinkerbell-bootstrap-ip ${local.pool_admin} 2>&1 | tee -a /root/eksa-create-cluster.log",
+      "eksctl anywhere create cluster --filename $CLUSTER_CONFIG_FILE --hardware-csv hardware.csv --tinkerbell-bootstrap-ip ${local.pool_admin} 2>&1 | tee -a /root/eksa-create-cluster.log",
     ]
   }
 
