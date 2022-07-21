@@ -85,6 +85,7 @@ If you run into something unexpected, after [checking the open issues](https://g
 
 The following tools will be needed on your local development environment where you will be running most of the commands in this guide.
 
+* A Unix-like environment (Linux, OSX, [Windows WSL](https://docs.microsoft.com/en-us/windows/wsl/install))
 * [jq](https://stedolan.github.io/jq/download/)
 * [metal-cli](https://github.com/equinix/metal-cli) (v0.9.0+)
 
