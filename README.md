@@ -75,11 +75,9 @@ eksa-node-dp-001   Ready    <none>                 5m30s   v1.22.10-eks-7dc61e8
 
 Steps below align with [EKS-A on Bare Metal instructions](https://anywhere.eks.amazonaws.com/docs/reference/baremetal/). While the steps below are intended to be complete, follow along with the EKS-A Install guide for best results.
 
-### Known Issues
+### Known and Unknown Issues
 
-_None Currently_.
-
-If you run into something unexpected, after [checking the open issues](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues), [open a new issue reporting your experience](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/new).
+No open issues are currently blocking. If you run into something unexpected, [check the open issues](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and [open a new issue reporting your experience](https://github.com/equinix-labs/terraform-equinix-metal-eks-anywhere/issues/new).
 
 ### Pre-requisites
 
@@ -355,12 +353,6 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    spec:
      hardwareSelector:
        type: dp
-   ```
-
-1. Change the osFamily to ubuntu for each TinkerbellMachineConfig section
-
-   ```sh
-   osFamily: ubuntu
    ```
 
 1. Create an EKS-A Cluster. Double check and be sure `$LC_POOL_ADMIN` and `$CLUSTER_NAME` are set correctly before running this (they were passed through SSH or otherwise defined in previous steps). Otherwise manually set them!

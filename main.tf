@@ -267,7 +267,6 @@ resource "null_resource" "create_cluster" {
       "yq e -i 'select(.spec.workerNodeGroupConfigurations[].machineGroupRef.kind == \"TinkerbellMachineConfig\").spec.workerNodeGroupConfigurations[0].count |= ${var.dp_device_count}' $CLUSTER_CONFIG_FILE",
       "yq e -i \"select(.kind == \\\"TinkerbellDatacenterConfig\\\").spec.tinkerbellIP |= \\\"$TINKERBELL_HOST_IP\\\"\" $CLUSTER_CONFIG_FILE",
       "yq e -i \"select(.kind == \\\"TinkerbellMachineConfig\\\").spec.users[].sshAuthorizedKeys[0] |= \\\"$PUB_SSH_KEY\\\"\" $CLUSTER_CONFIG_FILE",
-      "yq e -i 'select(.kind == \"TinkerbellMachineConfig\").spec.osFamily |= \"ubuntu\"' $CLUSTER_CONFIG_FILE",
       "yq e -i 'select(.kind == \"TinkerbellMachineConfig\").spec.hardwareSelector |= { \"type\": \"HW_TYPE\" }' $CLUSTER_CONFIG_FILE",
       "sed -i '0,/^\\([[:blank:]]*\\)type: HW_TYPE.*$/ s//\\1type: cp/' $CLUSTER_CONFIG_FILE",
       "sed -i '0,/^\\([[:blank:]]*\\)type: HW_TYPE.*$/ s//\\1type: dp/' $CLUSTER_CONFIG_FILE",
