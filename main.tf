@@ -251,8 +251,9 @@ resource "null_resource" "create_cluster" {
     destination = "/root/.ssh/${local.ssh_key_name}.pub"
   }
 
-  provisioner "remote-exec" {
-    script = templatefile("${path.module}/setup.clusterconfig.tftpl", {
+  provisioner "file" {
+    destination = "/root/setup-clusterconfig.sh"
+    content = templatefile("${path.module}/setup.clusterconfig.tftpl", {
       tink_vip        = local.tink_vip,
       cluster_name    = var.cluster_name,
       pool_vip        = local.pool_vip,
@@ -262,6 +263,13 @@ resource "null_resource" "create_cluster" {
       node_device_os  = var.node_device_os,
       pool_admin      = local.pool_admin,
     })
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /root/setup-clusterconfig.sh",
+      "/root/setup-clusterconfig.sh"
+    ]
   }
 
   depends_on = [
