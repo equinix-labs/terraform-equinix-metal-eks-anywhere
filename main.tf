@@ -252,27 +252,16 @@ resource "null_resource" "create_cluster" {
   }
 
   provisioner "remote-exec" {
-    inline = [
-      "export TINKERBELL_HOST_IP=${local.tink_vip}",
-      "export CLUSTER_NAME=${var.cluster_name}",
-      "export TINKERBELL_PROVIDER=true",
-      "export CONTROL_PLANE_VIP=${local.pool_vip}",
-      "export CLUSTER_CONFIG_FILE=$CLUSTER_NAME.yaml",
-      "export PUB_SSH_KEY=\"$(cat /root/.ssh/${local.ssh_key_name}.pub)\"",
-      "chmod 400 /root/.ssh/${local.ssh_key_name}.pub",
-      "eksctl anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_CONFIG_FILE",
-      "cp $CLUSTER_CONFIG_FILE $CLUSTER_CONFIG_FILE.orig",
-      "yq e -i \"select(.kind == \\\"Cluster\\\").spec.controlPlaneConfiguration.endpoint.host |= \\\"$CONTROL_PLANE_VIP\\\"\" $CLUSTER_CONFIG_FILE",
-      "yq e -i 'select(.kind == \"Cluster\").spec.controlPlaneConfiguration.count |= ${var.cp_device_count}' $CLUSTER_CONFIG_FILE",
-      "yq e -i 'select(.spec.workerNodeGroupConfigurations[].machineGroupRef.kind == \"TinkerbellMachineConfig\").spec.workerNodeGroupConfigurations[0].count |= ${var.dp_device_count}' $CLUSTER_CONFIG_FILE",
-      "yq e -i \"select(.kind == \\\"TinkerbellDatacenterConfig\\\").spec.tinkerbellIP |= \\\"$TINKERBELL_HOST_IP\\\"\" $CLUSTER_CONFIG_FILE",
-      "yq e -i \"select(.kind == \\\"TinkerbellMachineConfig\\\").spec.users[].sshAuthorizedKeys[0] |= \\\"$PUB_SSH_KEY\\\"\" $CLUSTER_CONFIG_FILE",
-      "yq e -i 'select(.kind == \"TinkerbellMachineConfig\").spec.osFamily |= \"ubuntu\"' $CLUSTER_CONFIG_FILE",
-      "yq e -i 'select(.kind == \"TinkerbellMachineConfig\").spec.hardwareSelector |= { \"type\": \"HW_TYPE\" }' $CLUSTER_CONFIG_FILE",
-      "sed -i '0,/^\\([[:blank:]]*\\)type: HW_TYPE.*$/ s//\\1type: cp/' $CLUSTER_CONFIG_FILE",
-      "sed -i '0,/^\\([[:blank:]]*\\)type: HW_TYPE.*$/ s//\\1type: dp/' $CLUSTER_CONFIG_FILE",
-      "eksctl anywhere create cluster --filename $CLUSTER_CONFIG_FILE --hardware-csv hardware.csv --tinkerbell-bootstrap-ip ${local.pool_admin} 2>&1 | tee -a /root/eksa-create-cluster.log",
-    ]
+    script = templatefile("${path.module}/setup.clusterconfig.tftpl", {
+      tink_vip        = local.tink_vip,
+      cluster_name    = var.cluster_name,
+      pool_vip        = local.pool_vip,
+      ssh_key_name    = local.ssh_key_name,
+      cp_device_count = var.cp_device_count,
+      dp_device_count = var.dp_device_count,
+      node_device_os  = var.node_device_os,
+      pool_admin      = local.pool_admin,
+    })
   }
 
   depends_on = [

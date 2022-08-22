@@ -25,6 +25,15 @@ variable "provisioner_device_type" {
   default     = "m3.small.x86"
 }
 
+variable "node_device_os" {
+  description = <<EOT
+   EKS-A supported operating system to deploy to nodes (*ubuntu, bottlerocket)
+
+   <https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/baremetal/#osfamily-required>
+   EOT
+  default     = "ubuntu"
+}
+
 variable "cp_device_type" {
   description = "Equinix Metal device type to deploy control plane nodes"
   default     = "m3.small.x86"
