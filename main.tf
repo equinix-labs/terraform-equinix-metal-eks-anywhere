@@ -181,7 +181,6 @@ resource "null_resource" "wait_for_cloud_init" {
     host        = equinix_metal_device.eksa_admin.network[0].address
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
   }
-
   provisioner "remote-exec" {
     inline = [
       "cloud-init status --wait"

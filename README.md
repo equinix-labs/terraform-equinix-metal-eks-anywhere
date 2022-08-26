@@ -15,9 +15,9 @@ See <https://aws.amazon.com/blogs/containers/getting-started-with-eks-anywhere-o
 EKS-A requires UEFI booting, which is supported by the following Equinix Metal On Demand plans:
 
 * m3.small.x86
-* m3.large.x86
-* n3.xlarge.x86
-* a3.large.x86
+* ~~m3.large.x86~~
+* ~~n3.xlarge.x86~~
+* ~~a3.large.x86~~
 
 ## Using Terraform
 
