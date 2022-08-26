@@ -352,10 +352,12 @@ We've now provided the `eksa-admin` machine with all of the variables and config
        type: dp
    ```
 
-1. Change the osFamily to ubuntu for each TinkerbellMachineConfig section
+1. Change the templateRef for each TinkerbellMachineConfig section
 
    ```sh
-   osFamily: ubuntu
+   templateRef:
+     kind: TinkerbellTemplateConfig
+     name: $CLUSTER_NAME
    ```
 
 1. Create an EKS-A Cluster. Double check and be sure `$LC_POOL_ADMIN` and `$CLUSTER_NAME` are set correctly before running this (they were passed through SSH or otherwise defined in previous steps). Otherwise manually set them!
@@ -368,7 +370,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 1. Append the following to the $CLUSTER_NAME.yaml file.
 
    ```sh
-   cat << EOF
+   cat << EOF >> $CLUSTER_NAME.yaml
    ---
    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
    kind: TinkerbellTemplateConfig
@@ -458,7 +460,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
          - /lib/firmware:/lib/firmware:ro
          worker: '{{.device_1}}'
       version: "0.1"
-   EOF >> $CLUSTER_NAME.yaml
+   EOF
    ```
 
 ### Steps to run locally while `eksctl anywhere` is creating the cluster
