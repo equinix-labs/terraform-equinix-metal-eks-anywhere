@@ -265,6 +265,15 @@ resource "null_resource" "create_cluster" {
     })
   }
 
+  provisioner "file" {
+    destination = "/root/tinkerbelltemplateconfig.yaml"
+    content = templatefile("${path.module}/tinkerbelltemplateconfig.tftpl", {
+      cluster_name = var.cluster_name,
+      pool_admin   = local.pool_admin,
+      tink_vip     = local.tink_vip,
+    })
+  }
+
   provisioner "remote-exec" {
     inline = [
       "chmod +x /root/setup-clusterconfig.sh",

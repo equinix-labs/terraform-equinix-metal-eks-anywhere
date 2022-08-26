@@ -1,0 +1,86 @@
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellTemplateConfig
+metadata:
+  name: ${cluster_name}
+spec:
+  template:
+    global_timeout: 6000
+    id: ""
+    name: ${cluster_name}
+    tasks:
+    - actions:
+      - environment:
+          COMPRESSED: "true"
+          DEST_DISK: /dev/sda
+          IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/raw/1-23/bottlerocket-v1.23.7-eks-d-1-23-4-eks-a-14-amd64.img.gz
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-14
+        name: stream-image
+        timeout: 600
+      - environment:
+          CONTENTS: |
+            # Version is required, it will change as we support
+            # additional settings
+            version = 1
+
+            # "eno1" is the interface name
+            # Users may turn on dhcp4 and dhcp6 via boolean
+            [enp1s0f0np0]
+            dhcp4 = true
+            dhcp6 = false
+            # Define this interface as the "primary" interface
+            # for the system.  This IP is what kubelet will use
+            # as the node IP.  If none of the interfaces has
+            # "primary" set, we choose the first interface in
+            # the file
+            primary = true
+          DEST_DISK: /dev/sda12
+          DEST_PATH: /net.toml
+          DIRMODE: "0755"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0644"
+          UID: "0"
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-14
+        name: write-netplan
+        pid: host
+        timeout: 90
+      - environment:
+          BOOTCONFIG_CONTENTS: |
+            kernel {
+                console = "ttyS1,115200n8"
+            }
+            init {
+                systemd.log_level=debug
+            }
+          DEST_DISK: /dev/sda12
+          DEST_PATH: /bootconfig.data
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0644"
+          UID: "0"
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-14
+        name: write-bootconfig
+        pid: host
+        timeout: 90
+      - environment:
+          DEST_DISK: /dev/sda12
+          DEST_PATH: /user-data.toml
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          HEGEL_URLS: http://${pool_admin}:50061,http://${tink_vip}:50061
+          MODE: "0644"
+          UID: "0"
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-14
+        name: write-user-data
+        pid: host
+        timeout: 90
+      - image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-14
+        name: reboot-image
+        pid: host
+        timeout: 90
+        volumes:
+        - /worker:/worker
+    version: "0.1"
