@@ -41,7 +41,7 @@ resource "equinix_metal_device" "eksa_node_cp" {
   metro            = var.metro
   operating_system = "custom_ipxe"
   ipxe_script_url  = "http://${local.pool_admin}/ipxe/"
-  always_pxe       = "true"
+  always_pxe       = "false"
   billing_cycle    = "hourly"
   project_id       = var.project_id
   tags             = concat(var.tags, ["tink-worker", "control-plane"])
@@ -81,7 +81,7 @@ resource "equinix_metal_device" "eksa_node_dp" {
   metro            = var.metro
   operating_system = "custom_ipxe"
   ipxe_script_url  = "http://${local.pool_admin}/ipxe/"
-  always_pxe       = "true"
+  always_pxe       = "false"
   billing_cycle    = "hourly"
   project_id       = var.project_id
   tags             = concat(var.tags, ["tink-worker", "data-plane"])
@@ -181,7 +181,6 @@ resource "null_resource" "wait_for_cloud_init" {
     host        = equinix_metal_device.eksa_admin.network[0].address
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
   }
-
   provisioner "remote-exec" {
     inline = [
       "cloud-init status --wait"
@@ -251,8 +250,9 @@ resource "null_resource" "create_cluster" {
     destination = "/root/.ssh/${local.ssh_key_name}.pub"
   }
 
-  provisioner "remote-exec" {
-    script = templatefile("${path.module}/setup.clusterconfig.tftpl", {
+  provisioner "file" {
+    destination = "/root/setup-clusterconfig.sh"
+    content = templatefile("${path.module}/setup.clusterconfig.tftpl", {
       tink_vip        = local.tink_vip,
       cluster_name    = var.cluster_name,
       pool_vip        = local.pool_vip,
@@ -262,6 +262,22 @@ resource "null_resource" "create_cluster" {
       node_device_os  = var.node_device_os,
       pool_admin      = local.pool_admin,
     })
+  }
+
+  provisioner "file" {
+    destination = "/root/tinkerbelltemplateconfig.yaml"
+    content = templatefile("${path.module}/tinkerbelltemplateconfig.tftpl", {
+      cluster_name = var.cluster_name,
+      pool_admin   = local.pool_admin,
+      tink_vip     = local.tink_vip,
+    })
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /root/setup-clusterconfig.sh",
+      "/root/setup-clusterconfig.sh"
+    ]
   }
 
   depends_on = [

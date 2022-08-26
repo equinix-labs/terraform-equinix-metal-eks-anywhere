@@ -15,9 +15,9 @@ See <https://aws.amazon.com/blogs/containers/getting-started-with-eks-anywhere-o
 EKS-A requires UEFI booting, which is supported by the following Equinix Metal On Demand plans:
 
 * m3.small.x86
-* m3.large.x86
-* n3.xlarge.x86
-* a3.large.x86
+* ~~m3.large.x86~~
+* ~~n3.xlarge.x86~~
+* ~~a3.large.x86~~
 
 ## Using Terraform
 
@@ -250,7 +250,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    ```
 
    ```sh
-   export EKSA_RELEASE="0.10.1" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=15
+   export EKSA_RELEASE="0.11.1" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=17
    curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}/artifacts/eks-a/v${EKSA_RELEASE}/${OS}/amd64/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" \
       --silent --location \
       | tar xz ./eksctl-anywhere
@@ -352,10 +352,12 @@ We've now provided the `eksa-admin` machine with all of the variables and config
        type: dp
    ```
 
-1. Change the osFamily to ubuntu for each TinkerbellMachineConfig section
+1. Change the templateRef for each TinkerbellMachineConfig section
 
    ```sh
-   osFamily: ubuntu
+   templateRef:
+     kind: TinkerbellTemplateConfig
+     name: $CLUSTER_NAME
    ```
 
 1. Create an EKS-A Cluster. Double check and be sure `$LC_POOL_ADMIN` and `$CLUSTER_NAME` are set correctly before running this (they were passed through SSH or otherwise defined in previous steps). Otherwise manually set them!
@@ -363,6 +365,102 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    ```sh
    eksctl anywhere create cluster --filename $CLUSTER_NAME.yaml \
      --hardware-csv hardware.csv --tinkerbell-bootstrap-ip $LC_POOL_ADMIN
+   ```
+
+1. Append the following to the $CLUSTER_NAME.yaml file.
+
+   ```sh
+   cat << EOF >> $CLUSTER_NAME.yaml
+   ---
+   apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+   kind: TinkerbellTemplateConfig
+   metadata:
+   name: ${CLUSTER_NAME}
+   spec:
+   template:
+      global_timeout: 6000
+      id: ""
+      name: ${CLUSTER_NAME}
+      tasks:
+      - actions:
+         - environment:
+            COMPRESSED: "true"
+            DEST_DISK: /dev/sda
+            IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/15/artifacts/raw/1-23/bottlerocket-v1.23.7-eks-d-1-23-4-eks-a-15-amd64.img.gz
+         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
+         name: stream-image
+         timeout: 600
+         - environment:
+            CONTENTS: |
+               # Version is required, it will change as we support
+               # additional settings
+               version = 1
+
+               # "eno1" is the interface name
+               # Users may turn on dhcp4 and dhcp6 via boolean
+               [enp1s0f0np0]
+               dhcp4 = true
+               dhcp6 = false
+               # Define this interface as the "primary" interface
+               # for the system.  This IP is what kubelet will use
+               # as the node IP.  If none of the interfaces has
+               # "primary" set, we choose the first interface in
+               # the file
+               primary = true
+            DEST_DISK: /dev/sda12
+            DEST_PATH: /net.toml
+            DIRMODE: "0755"
+            FS_TYPE: ext4
+            GID: "0"
+            MODE: "0644"
+            UID: "0"
+         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
+         name: write-netplan
+         pid: host
+         timeout: 90
+         - environment:
+            BOOTCONFIG_CONTENTS: |
+               kernel {
+                  console = "ttyS1,115200n8"
+               }
+            DEST_DISK: /dev/sda12
+            DEST_PATH: /bootconfig.data
+            DIRMODE: "0700"
+            FS_TYPE: ext4
+            GID: "0"
+            MODE: "0644"
+            UID: "0"
+         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
+         name: write-bootconfig
+         pid: host
+         timeout: 90
+         - environment:
+            DEST_DISK: /dev/sda12
+            DEST_PATH: /user-data.toml
+            DIRMODE: "0700"
+            FS_TYPE: ext4
+            GID: "0"
+            HEGEL_URLS: http://${LC_POOL_ADMIN}:50061,http://${LC_TINK_VIP}:50061
+            MODE: "0644"
+            UID: "0"
+         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
+         name: write-user-data
+         pid: host
+         timeout: 90
+         - image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
+         name: reboot-image
+         pid: host
+         timeout: 90
+         volumes:
+         - /worker:/worker
+         name: ${CLUSTER_NAME}
+         volumes:
+         - /dev:/dev
+         - /dev/console:/dev/console
+         - /lib/firmware:/lib/firmware:ro
+         worker: '{{.device_1}}'
+      version: "0.1"
+   EOF
    ```
 
 ### Steps to run locally while `eksctl anywhere` is creating the cluster

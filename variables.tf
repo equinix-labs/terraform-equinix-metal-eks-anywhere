@@ -27,11 +27,11 @@ variable "provisioner_device_type" {
 
 variable "node_device_os" {
   description = <<EOT
-   EKS-A supported operating system to deploy to nodes (*ubuntu, bottlerocket)
+   EKS-A supported operating system to deploy to nodes (*bottlerocket, ubuntu)
 
    <https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/baremetal/#osfamily-required>
    EOT
-  default     = "ubuntu"
+  default     = "bottlerocket"
 }
 
 variable "cp_device_type" {
