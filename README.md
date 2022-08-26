@@ -250,7 +250,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    ```
 
    ```sh
-   export EKSA_RELEASE="0.11.0" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=16
+   export EKSA_RELEASE="0.11.1" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=17
    curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}/artifacts/eks-a/v${EKSA_RELEASE}/${OS}/amd64/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" \
       --silent --location \
       | tar xz ./eksctl-anywhere
