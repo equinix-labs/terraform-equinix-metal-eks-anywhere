@@ -41,7 +41,7 @@ resource "equinix_metal_device" "eksa_node_cp" {
   metro            = var.metro
   operating_system = "custom_ipxe"
   ipxe_script_url  = "http://${local.pool_admin}/ipxe/"
-  always_pxe       = "true"
+  always_pxe       = "false"
   billing_cycle    = "hourly"
   project_id       = var.project_id
   tags             = concat(var.tags, ["tink-worker", "control-plane"])
@@ -81,7 +81,7 @@ resource "equinix_metal_device" "eksa_node_dp" {
   metro            = var.metro
   operating_system = "custom_ipxe"
   ipxe_script_url  = "http://${local.pool_admin}/ipxe/"
-  always_pxe       = "true"
+  always_pxe       = "false"
   billing_cycle    = "hourly"
   project_id       = var.project_id
   tags             = concat(var.tags, ["tink-worker", "data-plane"])
