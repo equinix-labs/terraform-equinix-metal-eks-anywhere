@@ -465,7 +465,9 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 
 ### Steps to run locally while `eksctl anywhere` is creating the cluster
 
-1. When the command above indicates it's waiting for the control plane node, reboot the two nodes. This is to force them attempt to iPXE boot from the tinkerbell stack that `eksctl anywhere` command creates. **Note** that this must be done without interrupting the `eksctl anywhere create cluster` command
+1. When the command above indicates it's waiting for the control plane node, reboot the two nodes. This
+   is to force them attempt to iPXE boot from the tinkerbell stack that `eksctl anywhere` command creates.
+   **Note** that this must be done without interrupting the `eksctl anywhere create cluster` command.
    
    Option 1 - You can use this command to automate it, but you'll need to be back on the original host.
 
@@ -476,8 +478,11 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    done
    ```
 
-   Option 2 - Instead of rebooting the nodes from the host you can force the iPXE boot from your local by [accessing each node's SOS console](https://metal.equinix.com/developers/docs/resilience-recovery/serial-over-ssh/). You can retrieve the uuid, facility, and root password of each node using the UI Console or the Equinix Metal's API.
+   Option 2 - Instead of rebooting the nodes from the host you can force the iPXE boot from your local by
+   [accessing each node's SOS console](https://metal.equinix.com/developers/docs/resilience-recovery/serial-over-ssh/).
+   You can retrieve the uuid and facility code of each node using the metal cli, UI Console or the Equinix Metal's API.
+   By default, any existing ssh key in the project can be used to login.
 
    ```sh
-   ssh {node-uuid}@sos.{facility-code}.platformequinix.com
+   ssh {node-uuid}@sos.{facility-code}.platformequinix.com -i </path/to/ssh-key>
    ```
