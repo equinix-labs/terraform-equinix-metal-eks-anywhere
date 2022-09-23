@@ -53,4 +53,4 @@ runcmd:
 - sudo mv ./eksctl-anywhere /usr/local/bin/
 - sed -i 's,^//\s"$${distro_id}:$${distro_codename}-updates";,        "$${distro_id}:$${distro_codename}-updates";,' /etc/apt/apt.conf.d/50unattended-upgrades
 - sed -i 's,^//Unattended-Upgrade::Automatic-Reboot "false";,Unattended-Upgrade::Automatic-Reboot "true";,' /etc/apt/apt.conf.d/50unattended-upgrades
-- sed -i 's,^//Unattended-Upgrade::Automatic-Reboot-Time "02:00";,Unattended-Upgrade::Automatic-Reboot-Time "02:00";,' /etc/apt/apt.conf.d/50unattended-upgrades
+- sed -i "s,^//Unattended-Upgrade::Automatic-Reboot-Time \"02:00\";,Unattended-Upgrade::Automatic-Reboot-Time $(date +"%H:%M" --date="12 hours");," /etc/apt/apt.conf.d/50unattended-upgrades
