@@ -16,7 +16,7 @@ resource "equinix_metal_reserved_ip_block" "public_ips" {
   type       = "public_ipv4"
   metro      = var.metro
   quantity   = 16
-  tags       = var.tags
+  tags       = concat(var.tags, ["eksa-${random_string.resource_suffix.result}"])
 }
 
 # Create a Metal Gateway
