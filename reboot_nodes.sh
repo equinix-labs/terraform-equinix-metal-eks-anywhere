@@ -14,7 +14,7 @@ IFS=","
 for node in "${!NODES[@]}"; do
     echo "Rebooting node $node ..."
     n=1
-    max=2
+    max=24
     delay=5
     while true; do
         HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "https://api.equinix.com/metal/v1/devices/$node/actions" -d "{\"type\":\"reboot\",\"force_delete\":\"false\"}" -H "Content-Type: application/json" -H "X-Auth-Token: $API_TOKEN")
