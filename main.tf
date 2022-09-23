@@ -190,7 +190,7 @@ resource "null_resource" "wait_for_cloud_init" {
 
 resource "null_resource" "create_cluster" {
   triggers = {
-    ids = join(",", concat(equinix_metal_device.eksa_node_cp.*.id, equinix_metal_device.eksa_node_dp.*.id))
+    ids = join(",", local.node_ids)
   }
 
   connection {
@@ -238,7 +238,13 @@ resource "null_resource" "create_cluster" {
       node_device_os  = var.node_device_os,
       pool_admin      = local.pool_admin,
       api_token       = var.metal_api_token,
-      nodes_id        = self.triggers.ids,
+      nodes_id        = zipmap(
+        local.node_ids,
+        formatlist("%s@sos.%s.platformequinix.com",
+          local.node_ids,
+          concat(equinix_metal_device.eksa_node_cp[*].deployed_facility, equinix_metal_device.eksa_node_dp[*].deployed_facility)
+        )
+      )
     })
   }
 
