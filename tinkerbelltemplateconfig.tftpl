@@ -2,19 +2,19 @@
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: TinkerbellTemplateConfig
 metadata:
-  name: ${cluster_name}
+  name: ${CLUSTER_NAME}
 spec:
   template:
     global_timeout: 6000
     id: ""
-    name: ${cluster_name}
+    name: ${CLUSTER_NAME}
     tasks:
     - actions:
       - environment:
           COMPRESSED: "true"
           DEST_DISK: /dev/sda
-          IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/17/artifacts/raw/1-23/bottlerocket-v1.23.9-eks-d-1-23-5-eks-a-17-amd64.img.gz
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-17
+          IMG_URL: ${BOTTLEROCKET_IMAGE_URL}
+        image: ${TINKERBELL_IMAGE_IMAGE2DISK}
         name: stream-image
         timeout: 600
       - environment:
@@ -41,7 +41,7 @@ spec:
           GID: "0"
           MODE: "0644"
           UID: "0"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-17
+        image: ${TINKERBELL_IMAGES_WRITEFILE}
         name: write-netplan
         pid: host
         timeout: 90
@@ -57,7 +57,7 @@ spec:
           GID: "0"
           MODE: "0644"
           UID: "0"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-17
+        image: ${TINKERBELL_IMAGES_WRITEFILE}
         name: write-bootconfig
         pid: host
         timeout: 90
@@ -67,20 +67,20 @@ spec:
           DIRMODE: "0700"
           FS_TYPE: ext4
           GID: "0"
-          HEGEL_URLS: http://${pool_admin}:50061,http://${tink_vip}:50061
+          HEGEL_URLS: http://${POOL_ADMIN}:50061,http://${TINK_VIP}:50061
           MODE: "0644"
           UID: "0"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-17
+        image: ${TINKERBELL_IMAGES_WRITEFILE}
         name: write-user-data
         pid: host
         timeout: 90
-      - image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-17
+      - image: ${TINKERBELL_IMAGES_REBOOT}
         name: reboot-image
         pid: host
         timeout: 90
         volumes:
         - /worker:/worker
-      name: ${cluster_name}
+      name: ${CLUSTER_NAME}
       volumes:
         - /dev:/dev
         - /dev/console:/dev/console

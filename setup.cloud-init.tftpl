@@ -29,11 +29,11 @@ packages:
 
 write_files:
 - content: |
-    auto bond0.${vlan_vnid}
-      iface bond0.${vlan_vnid} inet static
+    auto bond0.${VLAN_VNID}
+      iface bond0.${VLAN_VNID} inet static
       pre-up sleep 5
-      address ${admin_ip}
-      netmask ${netmask}
+      address ${ADMIN_IP}
+      netmask ${NETMASK}
       vlan-raw-device bond0
   append: true
   path: /etc/network/interfaces
@@ -45,6 +45,6 @@ runcmd:
 - sleep 10
 - curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" --silent --location | tar xz -C /tmp
 - sudo mv /tmp/eksctl /usr/local/bin/
-- export EKSA_RELEASE="0.11.3" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=20
+- export EKSA_RELEASE="${EKSA_VERSION_RELEASE}" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=${EKSA_VERSION_RELEASE_NUMBER}
 - curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/$RELEASE_NUMBER/artifacts/eks-a/v$EKSA_RELEASE/$OS/amd64/eksctl-anywhere-v$EKSA_RELEASE-$OS-amd64.tar.gz" --silent --location | tar xz ./eksctl-anywhere
 - sudo mv ./eksctl-anywhere /usr/local/bin/
