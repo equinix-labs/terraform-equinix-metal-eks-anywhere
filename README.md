@@ -360,13 +360,6 @@ We've now provided the `eksa-admin` machine with all of the variables and config
      name: $CLUSTER_NAME
    ```
 
-1. Create an EKS-A Cluster. Double check and be sure `$LC_POOL_ADMIN` and `$CLUSTER_NAME` are set correctly before running this (they were passed through SSH or otherwise defined in previous steps). Otherwise manually set them!
-
-   ```sh
-   eksctl anywhere create cluster --filename $CLUSTER_NAME.yaml \
-     --hardware-csv hardware.csv --tinkerbell-bootstrap-ip $LC_POOL_ADMIN
-   ```
-
 1. Append the following to the $CLUSTER_NAME.yaml file.
 
    ```sh
@@ -463,13 +456,28 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    EOF
    ```
 
+1. Create an EKS-A Cluster. Double check and be sure `$LC_POOL_ADMIN` and `$CLUSTER_NAME` are set correctly before running this (they were passed through SSH or otherwise defined in previous steps). Otherwise manually set them!
+
+   ```sh
+   eksctl anywhere create cluster --filename $CLUSTER_NAME.yaml \
+     --hardware-csv hardware.csv --tinkerbell-bootstrap-ip $LC_POOL_ADMIN
+   ```
+
 ### Steps to run locally while `eksctl anywhere` is creating the cluster
 
-1. When the command above indicates it's waiting for the control plane node, reboot the two nodes. This is to force them attempt to iPXE boot from the tinkerbell stack that `eksctl anywhere` command creates. You can use this command to automate it, but you'll need to be back on the original host.
+1. When the command above indicates it's waiting for the control plane node, reboot the two nodes. This is to force them attempt to iPXE boot from the tinkerbell stack that `eksctl anywhere` command creates. **Note** that this must be done without interrupting the `eksctl anywhere create cluster` command
+   
+   Option 1 - You can use this command to automate it, but you'll need to be back on the original host.
 
    ```sh
    node_ids=$(metal devices list -o json | jq -r '.[] | select(.hostname | startswith("eksa-node")) | .id')
    for id in $(echo $node_ids); do
       metal device reboot -i $id
    done
+   ```
+
+   Option 2 - Instead of rebooting the nodes from the host you can force the iPXE boot from your local by [accessing each node's SOS console](https://metal.equinix.com/developers/docs/resilience-recovery/serial-over-ssh/). You can retrieve the uuid, facility, and root password of each node using the UI Console or the Equinix Metal's API.
+
+   ```sh
+   ssh {node-uuid}@sos.{facility-code}.platformequinix.com
    ```
