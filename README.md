@@ -375,12 +375,12 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
    kind: TinkerbellTemplateConfig
    metadata:
-   name: ${cluster_name}
+   name: ${CLUSTER_NAME}
    spec:
    template:
       global_timeout: 6000
       id: ""
-      name: ${cluster_name}
+      name: ${CLUSTER_NAME}
       tasks:
       - actions:
          - environment:
@@ -440,7 +440,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
             DIRMODE: "0700"
             FS_TYPE: ext4
             GID: "0"
-            HEGEL_URLS: http://${pool_admin}:50061,http://${tink_vip}:50061
+            HEGEL_URLS: http://${LC_POOL_ADMIN}:50061,http://${LC_TINK_VIP}:50061
             MODE: "0644"
             UID: "0"
          image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-17
@@ -453,7 +453,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
          timeout: 90
          volumes:
          - /worker:/worker
-         name: ${cluster_name}
+         name: ${CLUSTER_NAME}
          volumes:
          - /dev:/dev
          - /dev/console:/dev/console
