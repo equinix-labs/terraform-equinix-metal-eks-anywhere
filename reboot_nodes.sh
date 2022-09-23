@@ -5,7 +5,7 @@ declare -A NODES="${1#*=}"
 
 truncate -s 0 eksa-create-cluster.log
 
-echo "Waiting for the creation of the workload cluster begins to reboot nodes..."
+echo "Waiting for the creation of the workload to start before rebooting nodes..."
 ( tail -f -n0 eksa-create-cluster.log & ) | grep -q "Creating new workload cluster"
 
 FAILED_IDS=""
