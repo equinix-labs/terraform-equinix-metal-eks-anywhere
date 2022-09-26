@@ -26,6 +26,9 @@ packages:
 - containerd.io
 - docker-ce-cli
 - docker-ce
+- unattended-upgrades
+package_update: true
+
 
 write_files:
 - content: |
@@ -48,3 +51,6 @@ runcmd:
 - export EKSA_RELEASE="${EKSA_VERSION_RELEASE}" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=${EKSA_VERSION_RELEASE_NUMBER}
 - curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/$RELEASE_NUMBER/artifacts/eks-a/v$EKSA_RELEASE/$OS/amd64/eksctl-anywhere-v$EKSA_RELEASE-$OS-amd64.tar.gz" --silent --location | tar xz ./eksctl-anywhere
 - sudo mv ./eksctl-anywhere /usr/local/bin/
+- sed -i 's,^//\s"$${distro_id}:$${distro_codename}-updates";,        "$${distro_id}:$${distro_codename}-updates";,' /etc/apt/apt.conf.d/50unattended-upgrades
+- sed -i 's,^//Unattended-Upgrade::Automatic-Reboot "false";,Unattended-Upgrade::Automatic-Reboot "true";,' /etc/apt/apt.conf.d/50unattended-upgrades
+- sed -i "s,^//Unattended-Upgrade::Automatic-Reboot-Time \"02:00\";,Unattended-Upgrade::Automatic-Reboot-Time $(date +"%H:%M" --date="12 hours");," /etc/apt/apt.conf.d/50unattended-upgrades

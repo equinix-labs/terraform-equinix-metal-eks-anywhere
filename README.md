@@ -21,7 +21,7 @@ EKS-A requires UEFI booting, which is supported by the following Equinix Metal O
 
 ## Using Terraform
 
-With your [Equinix Metal account, project, and a **User** API token](https://metal.equinix.com/developers/docs/accounts/users/), you can use [Terraform v1+](https://learn.hashicorp.com/tutorials/terraform/install-cli) to install a proof-of-concept demonstration environment for EKS-A on Baremetal. 
+With your [Equinix Metal account, project, and a **User** API token](https://metal.equinix.com/developers/docs/accounts/users/), you can use [Terraform v1+](https://learn.hashicorp.com/tutorials/terraform/install-cli) to install a proof-of-concept demonstration environment for EKS-A on Baremetal.
 
 Create a [`terraform.tfvars` file](https://www.terraform.io/language/values/variables#assigning-values-to-root-module-variables) in the root of this project with `metal_api_token` and `project_id` defined. These are the required variables needed to run `terraform apply`.  See `variables.tf` for additional settings that you may wish to customize.
 
