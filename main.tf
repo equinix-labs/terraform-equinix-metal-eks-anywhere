@@ -154,9 +154,11 @@ resource "equinix_metal_device" "eksa_admin" {
   tags             = concat(var.tags, ["tink-provisioner", "eksa-${random_string.resource_suffix.result}"])
 
   user_data = templatefile("${path.module}/setup.cloud-init.tftpl", {
-    admin_ip  = local.pool_admin
-    netmask   = equinix_metal_reserved_ip_block.public_ips.netmask
-    vlan_vnid = equinix_metal_vlan.provisioning_vlan.vxlan
+    ADMIN_IP                    = local.pool_admin
+    EKSA_VERSION_RELEASE        = var.eksa_version.release
+    EKSA_VERSION_RELEASE_NUMBER = var.eksa_version.release_number
+    NETMASK                     = equinix_metal_reserved_ip_block.public_ips.netmask
+    VLAN_VNID                   = equinix_metal_vlan.provisioning_vlan.vxlan
   })
 
   depends_on = [equinix_metal_ssh_key.ssh_pub_key]
@@ -258,9 +260,13 @@ resource "null_resource" "create_cluster" {
   provisioner "file" {
     destination = "/root/tinkerbelltemplateconfig.yaml"
     content = templatefile("${path.module}/tinkerbelltemplateconfig.tftpl", {
-      cluster_name = var.cluster_name,
-      pool_admin   = local.pool_admin,
-      tink_vip     = local.tink_vip,
+      CLUSTER_NAME                = var.cluster_name,
+      POOL_ADMIN                  = local.pool_admin,
+      TINK_VIP                    = local.tink_vip,
+      BOTTLEROCKET_IMAGE_URL      = var.bottlerocket_image_url,
+      TINKERBELL_IMAGE_IMAGE2DISK = var.tinkerbell_images.image2disk,
+      TINKERBELL_IMAGES_WRITEFILE = var.tinkerbell_images.writefile,
+      TINKERBELL_IMAGES_REBOOT    = var.tinkerbell_images.reboot
     })
   }
 
