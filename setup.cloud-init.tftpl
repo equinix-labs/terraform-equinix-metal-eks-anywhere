@@ -23,12 +23,7 @@ packages:
 - gnupg-agent
 - gnupg2
 - software-properties-common
-- containerd.io
-- docker-ce-cli
-- docker-ce
 - unattended-upgrades
-package_update: true
-
 
 write_files:
 - content: |
@@ -42,15 +37,19 @@ write_files:
   path: /etc/network/interfaces
 
 runcmd:
-- snap install yq
-- export HOME="/root"
-- systemctl restart networking
-- sleep 10
-- curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" --silent --location | tar xz -C /tmp
-- sudo mv /tmp/eksctl /usr/local/bin/
-- export EKSA_RELEASE="${EKSA_VERSION_RELEASE}" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=${EKSA_VERSION_RELEASE_NUMBER}
-- curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/$RELEASE_NUMBER/artifacts/eks-a/v$EKSA_RELEASE/$OS/amd64/eksctl-anywhere-v$EKSA_RELEASE-$OS-amd64.tar.gz" --silent --location | tar xz ./eksctl-anywhere
-- sudo mv ./eksctl-anywhere /usr/local/bin/
-- sed -i 's,^//\s"$${distro_id}:$${distro_codename}-updates";,        "$${distro_id}:$${distro_codename}-updates";,' /etc/apt/apt.conf.d/50unattended-upgrades
-- sed -i 's,^//Unattended-Upgrade::Automatic-Reboot "false";,Unattended-Upgrade::Automatic-Reboot "true";,' /etc/apt/apt.conf.d/50unattended-upgrades
-- sed -i "s,^//Unattended-Upgrade::Automatic-Reboot-Time \"02:00\";,Unattended-Upgrade::Automatic-Reboot-Time $(date +"%H:%M" --date="12 hours");," /etc/apt/apt.conf.d/50unattended-upgrades
+- |
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get remove -y docker docker-engine containerd runc
+  apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
+  snap install yq
+  export HOME="/root"
+  systemctl restart networking
+  sleep 10
+  curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" --silent --location | tar xz -C /tmp
+  mv /tmp/eksctl /usr/local/bin/
+  export EKSA_RELEASE="${EKSA_VERSION_RELEASE}" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=${EKSA_VERSION_RELEASE_NUMBER}
+  curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/$RELEASE_NUMBER/artifacts/eks-a/v$EKSA_RELEASE/$OS/amd64/eksctl-anywhere-v$EKSA_RELEASE-$OS-amd64.tar.gz" --silent --location | tar xz ./eksctl-anywhere
+  mv ./eksctl-anywhere /usr/local/bin/
+  sed -i 's,^//\s"$${distro_id}:$${distro_codename}-updates";,        "$${distro_id}:$${distro_codename}-updates";,' /etc/apt/apt.conf.d/50unattended-upgrades
+  sed -i 's,^//Unattended-Upgrade::Automatic-Reboot "false";,Unattended-Upgrade::Automatic-Reboot "true";,' /etc/apt/apt.conf.d/50unattended-upgrades
+  sed -i "s,^//Unattended-Upgrade::Automatic-Reboot-Time \"02:00\";,Unattended-Upgrade::Automatic-Reboot-Time $(date +"%H:%M" --date="12 hours");," /etc/apt/apt.conf.d/50unattended-upgrades
