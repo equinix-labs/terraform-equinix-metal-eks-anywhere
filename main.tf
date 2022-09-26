@@ -16,7 +16,7 @@ resource "equinix_metal_reserved_ip_block" "public_ips" {
   type       = "public_ipv4"
   metro      = var.metro
   quantity   = 16
-  tags       = var.tags
+  tags       = concat(var.tags, ["eksa-${random_string.resource_suffix.result}"])
 }
 
 # Create a Metal Gateway
@@ -36,7 +36,7 @@ resource "equinix_metal_gateway" "gw" {
 resource "equinix_metal_device" "eksa_node_cp" {
   count = var.cp_device_count
 
-  hostname         = format("eksa-node-cp-%03d", count.index + 1)
+  hostname         = format("eksa-${random_string.resource_suffix.result}-node-cp-%03d", count.index + 1)
   plan             = var.cp_device_type
   metro            = var.metro
   operating_system = "custom_ipxe"
@@ -44,7 +44,7 @@ resource "equinix_metal_device" "eksa_node_cp" {
   always_pxe       = "false"
   billing_cycle    = "hourly"
   project_id       = var.project_id
-  tags             = concat(var.tags, ["tink-worker", "control-plane"])
+  tags             = concat(var.tags, ["tink-worker", "control-plane", "eksa-${random_string.resource_suffix.result}"])
 }
 
 # Convert eksa nodes to Layer2-Unbonded (Layer2-Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names)
@@ -76,7 +76,7 @@ resource "equinix_metal_port_vlan_attachment" "eksa_node_cp_vlan_attach" {
 resource "equinix_metal_device" "eksa_node_dp" {
   count = var.dp_device_count
 
-  hostname         = format("eksa-node-dp-%03d", count.index + 1)
+  hostname         = format("eksa-${random_string.resource_suffix.result}-node-dp-%03d", count.index + 1)
   plan             = var.dp_device_type
   metro            = var.metro
   operating_system = "custom_ipxe"
@@ -84,7 +84,7 @@ resource "equinix_metal_device" "eksa_node_dp" {
   always_pxe       = "false"
   billing_cycle    = "hourly"
   project_id       = var.project_id
-  tags             = concat(var.tags, ["tink-worker", "data-plane"])
+  tags             = concat(var.tags, ["tink-worker", "data-plane", "eksa-${random_string.resource_suffix.result}"])
 }
 
 # Convert eksa nodes to Layer2-Unbonded (Layer2-Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names)
@@ -123,6 +123,13 @@ resource "random_string" "ssh_key_suffix" {
   upper   = false
 }
 
+# Generate random suffix for resource names
+resource "random_string" "resource_suffix" {
+  length  = 6
+  special = false
+  upper   = false
+}
+
 # Upload ssh_pub_key to Equinix Metal
 resource "equinix_metal_ssh_key" "ssh_pub_key" {
   name       = local.ssh_key_name
@@ -138,13 +145,13 @@ resource "local_file" "ssh_private_key" {
 
 # Create an eksa-admin/tink-provisioner device
 resource "equinix_metal_device" "eksa_admin" {
-  hostname         = "eksa-admin"
+  hostname         = "eksa-${random_string.resource_suffix.result}-admin"
   plan             = var.provisioner_device_type
   metro            = var.metro
   operating_system = "ubuntu_20_04"
   billing_cycle    = "hourly"
   project_id       = var.project_id
-  tags             = concat(var.tags, ["tink-provisioner"])
+  tags             = concat(var.tags, ["tink-provisioner", "eksa-${random_string.resource_suffix.result}"])
 
   user_data = templatefile("${path.module}/setup.cloud-init.tftpl", {
     admin_ip  = local.pool_admin
