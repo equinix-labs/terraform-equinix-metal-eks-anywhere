@@ -195,9 +195,9 @@ resource "null_resource" "wait_for_cloud_init" {
   }
 }
 
-resource "null_resource" "reboot_nodes" {
+resource "null_resource" "create_cluster" {
   triggers = {
-    ids = join(",", concat(equinix_metal_device.eksa_node_cp.*.id, equinix_metal_device.eksa_node_dp.*.id))
+    ids = join(",", local.node_ids)
   }
 
   connection {
@@ -210,30 +210,6 @@ resource "null_resource" "reboot_nodes" {
   provisioner "file" {
     source      = "${path.module}/reboot_nodes.sh"
     destination = "/root/reboot_nodes.sh"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /root/reboot_nodes.sh",
-      "API_TOKEN=${var.metal_api_token} /root/reboot_nodes.sh ${self.triggers.ids} > reboot_nodes.log"
-    ]
-  }
-
-  depends_on = [
-    null_resource.wait_for_cloud_init,
-  ]
-}
-
-resource "null_resource" "create_cluster" {
-  triggers = {
-    ids = join(",", concat(equinix_metal_device.eksa_node_cp.*.id, equinix_metal_device.eksa_node_dp.*.id))
-  }
-
-  connection {
-    type        = "ssh"
-    user        = "root"
-    host        = equinix_metal_device.eksa_admin.network[0].address
-    private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
   }
 
   provisioner "file" {
@@ -268,6 +244,14 @@ resource "null_resource" "create_cluster" {
       dp_device_count = var.dp_device_count,
       node_device_os  = var.node_device_os,
       pool_admin      = local.pool_admin,
+      api_token       = var.metal_api_token,
+      nodes_id        = zipmap(
+        local.node_ids,
+        formatlist("%s@sos.%s.platformequinix.com",
+          local.node_ids,
+          concat(equinix_metal_device.eksa_node_cp[*].deployed_facility, equinix_metal_device.eksa_node_dp[*].deployed_facility)
+        )
+      )
     })
   }
 
