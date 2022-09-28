@@ -13,6 +13,10 @@ output "eksa_admin_ssh_key" {
 output "eksa_public_ips_cidr" {
   value = local.pool_nw_cidr
 }
+output "eksa_pool_admin" {
+  value = local.pool_admin
+}
+
 
 output "eksa_public_ips_gateway" {
   value = equinix_metal_reserved_ip_block.public_ips.gateway
