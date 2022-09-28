@@ -10,6 +10,18 @@ output "eksa_admin_ssh_key" {
   value = local_file.ssh_private_key.filename
 }
 
+output "eksa_public_ips_cidr" {
+  value = local.pool_nw_cidr
+}
+
+output "eksa_public_ips_gateway" {
+  value = equinix_metal_reserved_ip_block.public_ips.gateway
+}
+
+output "eksa_public_ips_netmask" {
+  value = equinix_metal_reserved_ip_block.public_ips.netmask
+}
+
 # Out-of-band console ( Serial Over SSH - https://metal.equinix.com/developers/docs/resilience-recovery/serial-over-ssh/)
 output "eksa_nodes_sos" {
   value = zipmap(
