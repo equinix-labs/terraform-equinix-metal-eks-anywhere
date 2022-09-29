@@ -88,3 +88,12 @@ variable "tinkerbell_images" {
     reboot     = optional(string, "public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-17")
   })
 }
+
+variable "plan_nic" {
+  description = "Map of plans to expected NIC device name."
+  default = {
+    "m3.small.x86"  = "enp1s0f0np0"
+    "c2.medium.x86" = "enp131s0f0np0"
+  }
+  type = map(string)
+}
