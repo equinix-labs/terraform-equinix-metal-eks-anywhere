@@ -10,6 +10,10 @@ This project deploys EKS-A Anywhere on Baremetal on Equinix Metal using the mini
 
 See <https://aws.amazon.com/blogs/containers/getting-started-with-eks-anywhere-on-bare-metal/> for more information about EKS-A on Bare Metal.
 
+## Demos
+
+In the [examples/lab](./examples/lab/) directory, you can find a Terraform module to faciliate EKS-A on Bare Metal Lab environments.
+
 ## Compatible Plans
 
 EKS-A requires UEFI booting, which is supported by the following Equinix Metal On Demand plans:
