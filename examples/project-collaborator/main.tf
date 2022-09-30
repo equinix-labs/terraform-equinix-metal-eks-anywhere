@@ -3,7 +3,7 @@ terraform {
 
   required_providers {
     equinix = {
-      source = "equinix/equinix"
+      source  = "equinix/equinix"
       version = ">= 1.10.0"
     }
   }
@@ -11,6 +11,12 @@ terraform {
 
 resource "equinix_metal_project" "project" {
   name = replace(var.collaborator, "@", "-")
+}
+
+resource "equinix_metal_project_api_key" "project_key" {
+  project_id  = equinix_metal_project.project.id
+  description = "API token used to stand up individual user's clusters. Has limited permissions versus your user token."
+  read_only   = false
 }
 
 resource "equinix_metal_organization_member" "user" {
@@ -34,13 +40,14 @@ module "eksa" {
   # source = "equinix/metal-eks-anywhere/equinix"
   source = "../../"
 
-  metal_api_token         = var.metal_api_token
-  project_id              = equinix_metal_project.project.id
-  cluster_name            = var.cluster_name
-  metro                   = var.metro
-  provisioner_device_type = var.provisioner_device_type
-  cp_device_type          = var.cp_device_type
-  dp_device_type          = var.dp_device_type
+  metal_api_token          = equinix_metal_project_api_key.project_key.token
+  project_id               = equinix_metal_project.project.id
+  cluster_name             = var.cluster_name
+  metro                    = var.metro
+  provisioner_device_type  = var.provisioner_device_type
+  cp_device_type           = var.cp_device_type
+  dp_device_type           = var.dp_device_type
+  permit_root_ssh_password = var.permit_root_ssh_password
 }
 
 resource "equinix_metal_device" "addon_eksa_node_dp" {
