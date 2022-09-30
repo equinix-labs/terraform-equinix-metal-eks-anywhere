@@ -78,7 +78,7 @@ There are various failure scenarios. For each scenario there is am optimal retry
   ./replace.sh email@address.here
   ```
 
-  When building a large lab, you may need to replace several environments. Identify and taint all of the failed environments using this script and then run `terraform apply`. If you inadvertantly mark the wrong resources, rerun the command with "untaint" at the end of the command (`./replace email@address.here untaint`).
+  When building a large lab, you may need to replace several environments. Identify and taint all of the failed environments using this script and then run `terraform apply`. If you inadvertantly mark the wrong resources, rerun the command with "untaint" at the end of the command (`./replace email@address.here untaint`). Participants will need to check their email and accept a new invitation to the project as the old project will be deleted.
 
   Terraform taints can be performed more selectively based on the failed step. For example, it should be sufficient to taint failed nodes and the `create_cluster` execution in some cases. In the future, guidance may be offered by this README.md for specific scenarios. For now each ifailed project must be replaced in its entirety when it has failed.
 
