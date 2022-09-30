@@ -2,12 +2,12 @@
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: TinkerbellTemplateConfig
 metadata:
-  name: ${CLUSTER_NAME}
+  name: ${TEMPLATE_NAME}
 spec:
   template:
     global_timeout: 6000
     id: ""
-    name: ${CLUSTER_NAME}
+    name: ${TEMPLATE_NAME}
     tasks:
     - actions:
       - environment:
@@ -25,7 +25,7 @@ spec:
 
             # "eno1" is the interface name
             # Users may turn on dhcp4 and dhcp6 via boolean
-            [enp1s0f0np0]
+            [${NIC_NAME}]
             dhcp4 = true
             dhcp6 = false
             # Define this interface as the "primary" interface
@@ -80,7 +80,7 @@ spec:
         timeout: 90
         volumes:
         - /worker:/worker
-      name: ${CLUSTER_NAME}
+      name: ${TEMPLATE_NAME}
       volumes:
         - /dev:/dev
         - /dev/console:/dev/console

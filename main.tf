@@ -234,15 +234,18 @@ resource "null_resource" "create_cluster" {
   provisioner "file" {
     destination = "/root/setup-clusterconfig.sh"
     content = templatefile("${path.module}/setup.clusterconfig.tftpl", {
-      tink_vip        = local.tink_vip,
-      cluster_name    = var.cluster_name,
-      pool_vip        = local.pool_vip,
-      ssh_key_name    = local.ssh_key_name,
-      cp_device_count = var.cp_device_count,
-      dp_device_count = var.dp_device_count,
-      node_device_os  = var.node_device_os,
-      pool_admin      = local.pool_admin,
-      api_token       = var.metal_api_token,
+      tink_vip                 = local.tink_vip,
+      cluster_name             = var.cluster_name,
+      pool_vip                 = local.pool_vip,
+      ssh_key_name             = local.ssh_key_name,
+      cp_template              = replace("cp-${var.cluster_name}-${var.cp_device_type}", ".", "-"),
+      dp_template              = replace("dp-${var.cluster_name}-${var.dp_device_type}", ".", "-"),
+      cp_device_count          = var.cp_device_count,
+      dp_device_count          = var.dp_device_count,
+      node_device_os           = var.node_device_os,
+      pool_admin               = local.pool_admin,
+      api_token                = var.metal_api_token,
+      permit_root_ssh_password = var.permit_root_ssh_password
       nodes_id = zipmap(
         local.node_ids,
         formatlist("%s@sos.%s.platformequinix.com",
@@ -254,15 +257,30 @@ resource "null_resource" "create_cluster" {
   }
 
   provisioner "file" {
-    destination = "/root/tinkerbelltemplateconfig.yaml"
+    destination = "/root/cp-tinkerbelltemplateconfig.yaml"
     content = templatefile("${path.module}/tinkerbelltemplateconfig.tftpl", {
-      CLUSTER_NAME                = var.cluster_name,
       POOL_ADMIN                  = local.pool_admin,
       TINK_VIP                    = local.tink_vip,
       BOTTLEROCKET_IMAGE_URL      = var.bottlerocket_image_url,
+      TEMPLATE_NAME               = replace("cp-${var.cluster_name}-${var.cp_device_type}", ".", "-"),
       TINKERBELL_IMAGE_IMAGE2DISK = var.tinkerbell_images.image2disk,
       TINKERBELL_IMAGES_WRITEFILE = var.tinkerbell_images.writefile,
       TINKERBELL_IMAGES_REBOOT    = var.tinkerbell_images.reboot
+      NIC_NAME                    = replace(var.plan_nic[var.cp_device_type], ".", "-")
+    })
+  }
+
+  provisioner "file" {
+    destination = "/root/dp-tinkerbelltemplateconfig.yaml"
+    content = templatefile("${path.module}/tinkerbelltemplateconfig.tftpl", {
+      POOL_ADMIN                  = local.pool_admin,
+      TINK_VIP                    = local.tink_vip,
+      BOTTLEROCKET_IMAGE_URL      = var.bottlerocket_image_url,
+      TEMPLATE_NAME               = replace("dp-${var.cluster_name}-${var.dp_device_type}", ".", "-"),
+      TINKERBELL_IMAGE_IMAGE2DISK = var.tinkerbell_images.image2disk,
+      TINKERBELL_IMAGES_WRITEFILE = var.tinkerbell_images.writefile,
+      TINKERBELL_IMAGES_REBOOT    = var.tinkerbell_images.reboot
+      NIC_NAME                    = replace(var.plan_nic[var.dp_device_type], ".", "-")
     })
   }
 

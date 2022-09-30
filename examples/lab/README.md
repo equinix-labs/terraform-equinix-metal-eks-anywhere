@@ -31,11 +31,12 @@ The requirements and featureset of EKS-A on Bare Metal, BottleRocket OS, and Equ
 
 From a local copy of this `terraform-equinix-metal-eksa-on-baremetal` project:
 
-```
+```sh
 cd examples/lab
 cp terraform.tfvars.example terraform.tfvars
 vim terraform.tfvars
 vim users.csv
+terraform init -upgrade
 terraform apply
 ```
 
@@ -72,10 +73,12 @@ There are various failure scenarios. For each scenario there is am optimal retry
   If a node fails to provision, the `terraform apply` command will take up to 60m and eventually time out. When this happens you may see errors such as `Terminating this operation may leave the cluster in an irrecoverable state.
 
   To replace a cluster, and only that cluster, run the following:
+
   ```sh
   ./replace.sh email@address.here
   ```
-  When building a large lab, you may need to replace several environments. Identify and taint all of the failed environments using this script and then run `terraform apply`. If you inadvertantly mark the wrong resources, rerun the command with "untaint" at the end of the command (`./replace email@address.here untaint`).
+
+  When building a large lab, you may need to replace several environments. Identify and taint all of the failed environments using this script and then run `terraform apply`. If you inadvertantly mark the wrong resources, rerun the command with "untaint" at the end of the command (`./replace email@address.here untaint`). Participants will need to check their email and accept a new invitation to the project as the old project will be deleted.
 
   Terraform taints can be performed more selectively based on the failed step. For example, it should be sufficient to taint failed nodes and the `create_cluster` execution in some cases. In the future, guidance may be offered by this README.md for specific scenarios. For now each ifailed project must be replaced in its entirety when it has failed.
 
@@ -84,7 +87,12 @@ There are various failure scenarios. For each scenario there is am optimal retry
   * dp_node failed to provision
     <!-- TODO: fix notes -->
   * extra node failed to provision
-    <!-- TODO: fix notes -->
+    * The participant can do these steps themselves.
+      * Delete the failed node.
+      * Create a new m3.small.x86 with Custom iPXE as the OS type in the same metro as your other servers.
+      * When the node is provisioned, obtain the MAC address and choose an available IP from the IP block (usually this is the fifth address in the block, ie. gateway address + 5).
+      * Add these values to the hardware.csv file on the eksa-admin machine.
+      * Follow the normal steps for adding a node to the cluster.
 
 ## Terminating the Lab
 
@@ -92,3 +100,5 @@ Run `terraform destroy` to terminate all resources provisioned during the lab. R
 
 Collaborators will be removed from the host organization.
 Collaborators can be removed without affecting the EKS-A environments using targeted Terraform commands.
+
+If a node had to be manually added to a project, the project may fail to delete at the end of the lab event.Use the console or metal CLI to manually delete the project.

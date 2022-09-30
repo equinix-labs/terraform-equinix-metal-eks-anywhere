@@ -1,2 +1,2 @@
-metal_api_token="your_token_here"
+metal_api_token="your_token_here" #This must be a user API token
 organization_id="your_organization_id"

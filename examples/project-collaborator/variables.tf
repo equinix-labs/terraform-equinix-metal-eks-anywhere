@@ -45,3 +45,9 @@ variable "dp_device_count" {
   description = "Number of baremetal data plane (worker) nodes"
   default     = 1
 }
+
+variable "permit_root_ssh_password" {
+  description = "Enable root SSH logins via password. This is intended for lab environments."
+  default     = false
+  type        = bool
+}
