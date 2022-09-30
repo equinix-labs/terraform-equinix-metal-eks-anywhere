@@ -21,6 +21,7 @@ complete -o default -F __start_kubectl k
 source <(eksctl completion bash)
 source <(eksctl anywhere completion bash)
 alias anywhere='eksctl anywhere'
+export KUBECONFIG="/root/$CLUSTER_NAME/$CLUSTER_NAME.kubeconfig"
 EOF
 # build cluster config file
 eksctl anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_CONFIG_FILE
