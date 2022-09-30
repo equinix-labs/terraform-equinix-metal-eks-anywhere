@@ -97,3 +97,9 @@ variable "plan_nic" {
   }
   type = map(string)
 }
+
+variable "permit_root_ssh_password" {
+  description = "Enable root SSH logins via password. This is intended for lab environments."
+  default     = false
+  type        = bool
+}

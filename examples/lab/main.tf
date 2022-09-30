@@ -22,13 +22,14 @@ data "equinix_metal_organization" "org" {
 }
 
 module "lab" {
-  for_each                = { for user in local.users : user.email => user }
-  source                  = "../project-collaborator"
-  organization_id         = data.equinix_metal_organization.org.id
-  collaborator            = each.value.email
-  metal_api_token         = var.metal_api_token
-  metro                   = each.value.metro
-  provisioner_device_type = each.value.plan
-  cp_device_type          = each.value.plan
-  dp_device_type          = each.value.plan
+  for_each                 = { for user in local.users : user.email => user }
+  source                   = "../project-collaborator"
+  organization_id          = data.equinix_metal_organization.org.id
+  collaborator             = each.value.email
+  metal_api_token          = var.metal_api_token
+  metro                    = each.value.metro
+  provisioner_device_type  = each.value.plan
+  cp_device_type           = each.value.plan
+  dp_device_type           = each.value.plan
+  permit_root_ssh_password = var.permit_root_ssh_password
 }

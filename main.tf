@@ -234,17 +234,18 @@ resource "null_resource" "create_cluster" {
   provisioner "file" {
     destination = "/root/setup-clusterconfig.sh"
     content = templatefile("${path.module}/setup.clusterconfig.tftpl", {
-      tink_vip        = local.tink_vip,
-      cluster_name    = var.cluster_name,
-      pool_vip        = local.pool_vip,
-      ssh_key_name    = local.ssh_key_name,
-      cp_template     = replace("cp-${var.cluster_name}-${var.cp_device_type}", ".", "-"),
-      dp_template     = replace("dp-${var.cluster_name}-${var.dp_device_type}", ".", "-"),
-      cp_device_count = var.cp_device_count,
-      dp_device_count = var.dp_device_count,
-      node_device_os  = var.node_device_os,
-      pool_admin      = local.pool_admin,
-      api_token       = var.metal_api_token,
+      tink_vip                 = local.tink_vip,
+      cluster_name             = var.cluster_name,
+      pool_vip                 = local.pool_vip,
+      ssh_key_name             = local.ssh_key_name,
+      cp_template              = replace("cp-${var.cluster_name}-${var.cp_device_type}", ".", "-"),
+      dp_template              = replace("dp-${var.cluster_name}-${var.dp_device_type}", ".", "-"),
+      cp_device_count          = var.cp_device_count,
+      dp_device_count          = var.dp_device_count,
+      node_device_os           = var.node_device_os,
+      pool_admin               = local.pool_admin,
+      api_token                = var.metal_api_token,
+      permit_root_ssh_password = var.permit_root_ssh_password
       nodes_id = zipmap(
         local.node_ids,
         formatlist("%s@sos.%s.platformequinix.com",
