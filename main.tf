@@ -1,7 +1,3 @@
-# Configure the Equinix Provider.
-provider "equinix" {
-  auth_token = var.metal_api_token
-}
 
 # Create a new VLAN in specified datacenter
 resource "equinix_metal_vlan" "provisioning_vlan" {
@@ -247,7 +243,7 @@ resource "null_resource" "create_cluster" {
       node_device_os  = var.node_device_os,
       pool_admin      = local.pool_admin,
       api_token       = var.metal_api_token,
-      nodes_id        = zipmap(
+      nodes_id = zipmap(
         local.node_ids,
         formatlist("%s@sos.%s.platformequinix.com",
           local.node_ids,

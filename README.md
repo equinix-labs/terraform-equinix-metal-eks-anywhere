@@ -10,6 +10,10 @@ This project deploys EKS-A Anywhere on Baremetal on Equinix Metal using the mini
 
 See <https://aws.amazon.com/blogs/containers/getting-started-with-eks-anywhere-on-bare-metal/> for more information about EKS-A on Bare Metal.
 
+## Demos
+
+In the [examples/lab](./examples/lab/) directory, you can find a Terraform module to faciliate EKS-A on Bare Metal Lab environments.
+
 ## Compatible Plans
 
 EKS-A requires UEFI booting, which is supported by the following Equinix Metal On Demand plans:
@@ -22,6 +26,12 @@ EKS-A requires UEFI booting, which is supported by the following Equinix Metal O
 ## Using Terraform
 
 With your [Equinix Metal account, project, and a **User** API token](https://metal.equinix.com/developers/docs/accounts/users/), you can use [Terraform v1+](https://learn.hashicorp.com/tutorials/terraform/install-cli) to install a proof-of-concept demonstration environment for EKS-A on Baremetal.
+
+Enter the `examples/deploy` directory.
+
+```sh
+$ cd examples/deploy
+```
 
 Create a [`terraform.tfvars` file](https://www.terraform.io/language/values/variables#assigning-values-to-root-module-variables) in the root of this project with `metal_api_token` and `project_id` defined. These are the required variables needed to run `terraform apply`.  See `variables.tf` for additional settings that you may wish to customize.
 
