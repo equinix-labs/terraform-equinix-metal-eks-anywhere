@@ -45,6 +45,19 @@ The `users.csv` file can be updated at any time to change the target metro or pl
 
 A successful environment will result in a terraform output of `🎉 Cluster created!` for the environment.
 
+### Accessing the cluster
+
+Prerequisites:
+- SSH client installed
+
+When the event starts, participants should make sure they accepted the collaboration invitation emailed to them and then log into the Equinix Metal console <https://console.equinix.com>.
+
+They will find that they have access to the event Organization and their project.
+
+Within their project, they will find a server with a hostname prefixed `eksa-admin`. They should click on this server to find the IP address and `root` password. They must then login to this server using their local SSH tools. `ssh root@IP-OF-EKSA-ADMIN`.
+
+Once logged in, they will find additional guidance in the `/root/README.md` file.
+
 ## Failed Provisions
 
 Be sure to begin provisioning nodes in advance of your lab. Each project can take 30m or longer to setup. Complications may arise requiring a project to be recreated, which can greatly extend the time required.
