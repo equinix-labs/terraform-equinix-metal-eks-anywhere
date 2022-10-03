@@ -32,4 +32,5 @@ module "lab" {
   cp_device_type           = each.value.plan
   dp_device_type           = each.value.plan
   permit_root_ssh_password = var.permit_root_ssh_password
+  send_invites             = var.send_invites
 }

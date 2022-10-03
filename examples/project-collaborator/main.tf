@@ -20,6 +20,7 @@ resource "equinix_metal_project_api_key" "project_key" {
 }
 
 resource "equinix_metal_organization_member" "user" {
+  count           = var.send_invites ? 1 : 0
   organization_id = var.organization_id
 
   roles = ["limited_collaborator"] #required
