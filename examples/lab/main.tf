@@ -14,7 +14,7 @@ terraform {
 }
 
 locals {
-  users = csvdecode(file("users.csv"))
+  users = csvdecode(file(var.csv_file))
 }
 
 data "equinix_metal_organization" "org" {
@@ -22,15 +22,15 @@ data "equinix_metal_organization" "org" {
 }
 
 module "lab" {
-  for_each                 = { for user in local.users : user.email => user }
+  for_each                 = { for user in local.users : trimspace(user.email) => user }
   source                   = "../project-collaborator"
   organization_id          = data.equinix_metal_organization.org.id
   collaborator             = each.value.email
   metal_api_token          = var.metal_api_token
-  metro                    = each.value.metro
-  provisioner_device_type  = each.value.plan
-  cp_device_type           = each.value.plan
-  dp_device_type           = each.value.plan
+  metro                    = trimspace(each.value.metro)
+  provisioner_device_type  = trimspace(each.value.plan)
+  cp_device_type           = trimspace(each.value.plan)
+  dp_device_type           = trimspace(each.value.plan)
   permit_root_ssh_password = var.permit_root_ssh_password
   send_invites             = var.send_invites
 }
