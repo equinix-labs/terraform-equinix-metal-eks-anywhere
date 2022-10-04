@@ -64,6 +64,12 @@ Once logged in, they will find additional guidance in the `/root/README.md` file
 
 Be sure to begin provisioning nodes in advance of your lab. Each project can take 30m or longer to setup. Complications may arise requiring a project to be recreated, which can greatly extend the time required.
 
+### Detecting failures
+
+Watch the output logs for any errors. Progress can be deceptive because Terraform's DAG will queue up resources behind other resources. You may not see errors until the final script timeout (about 60m) or the execution is canceled.
+
+When a failure occurs on some environments, while other succeed, you should be able to detect the failed nodes with a command like `terraform state list | cut -f 2 -d\" | sort | uniq -c  | sort -n`.  This command lists how many resources were provisioned for each lab environment. Environments that have too few resources were not able to complete and can be replaced.
+
 ### Reprovisioning a Failed Cluster
 
 There are various failure scenarios. For each scenario there is am optimal retry approach and a last ditch approach.
