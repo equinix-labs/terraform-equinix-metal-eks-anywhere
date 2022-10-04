@@ -35,7 +35,7 @@ From a local copy of this `terraform-equinix-metal-eksa-on-baremetal` project:
 cd examples/lab
 cp terraform.tfvars.example terraform.tfvars
 vim terraform.tfvars
-cp users.csv.examples users.csv
+cp users.csv.example users.csv
 vim users.csv
 terraform init -upgrade
 terraform apply
