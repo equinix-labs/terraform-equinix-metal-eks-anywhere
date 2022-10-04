@@ -26,6 +26,11 @@ output "eksa_public_ips_netmask" {
   value = equinix_metal_reserved_ip_block.public_ips.netmask
 }
 
+output "eksa_vlan_id" {
+  description = "UUID of the Equinix Metal VLAN"
+  value       = equinix_metal_vlan.provisioning_vlan.id
+}
+
 # Out-of-band console ( Serial Over SSH - https://metal.equinix.com/developers/docs/resilience-recovery/serial-over-ssh/)
 output "eksa_nodes_sos" {
   value = zipmap(
