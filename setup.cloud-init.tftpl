@@ -43,7 +43,9 @@ runcmd:
   apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
   snap install yq
   export HOME="/root"
-  systemctl restart networking
+  ip link add link bond0 name bond0.${VLAN_VNID} type vlan id ${VLAN_VNID}
+  ip addr add ${ADMIN_IP}/${CIDR} dev bond0.${VLAN_VNID}
+  ip link set dev bond0.${VLAN_VNID} up
   sleep 10
   curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" --silent --location | tar xz -C /tmp
   mv /tmp/eksctl /usr/local/bin/
