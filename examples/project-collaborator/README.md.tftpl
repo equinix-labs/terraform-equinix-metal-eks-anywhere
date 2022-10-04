@@ -19,7 +19,12 @@ Use that group name along with the csv file to scale the cluster.
 
 ```sh
 eksctl anywhere generate hardware -z hardware2.csv > cluster-scale.yaml
+```
 Edit cluster-scale.yaml and remove the two bmc items.
+
+Apply the cluster-scale.yaml file to the cluster and scale the machinedeployment.
+```
+kubectl apply -f cluster-scale.yaml
 kubectl scale machinedeployments -n eksa-system <Your MachineDeployment Group Name> --replicas 1
 ```
 
