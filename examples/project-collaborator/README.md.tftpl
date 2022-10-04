@@ -1,10 +1,11 @@
-## build hardware csv
+## Build hardware csv
 
 ```csv
 hostname,vendor,mac,ip_address,gateway,netmask,nameservers,disk,labels
-${node.hostname},Equinix,%{ for port in node.ports}%{ if port.name == "eth0"}${port.mac}%{ endif }%{ endfor },${ip},${gateway},${netmask},8.8.8.8,/dev/sda,type=cp
+${node.hostname},Equinix,%{ for port in node.ports}%{ if port.name == "eth0"}${port.mac}%{ endif }%{ endfor },${ip},${gateway},${netmask},8.8.8.8,/dev/sda,type=dp
 ```
 
-## add node to eks-a
+## Add the node to eks-a
 
-## reboot nodes
+## Reboot node
+

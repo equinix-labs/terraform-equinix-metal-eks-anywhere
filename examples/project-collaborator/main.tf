@@ -20,6 +20,7 @@ resource "equinix_metal_project_api_key" "project_key" {
 }
 
 resource "equinix_metal_organization_member" "user" {
+  count           = var.send_invites ? 1 : 0
   organization_id = var.organization_id
 
   roles = ["limited_collaborator"] #required
@@ -63,12 +64,23 @@ resource "equinix_metal_device" "addon_eksa_node_dp" {
 }
 
 # Convert eksa nodes to Layer2-Unbonded (Layer2-Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names)
-resource "equinix_metal_device_network_type" "eksa_node_dp_network_type" {
-  device_id = equinix_metal_device.addon_eksa_node_dp.id
-  type      = "layer2-individual"
+resource "equinix_metal_port" "addon_dp_bond0" {
+  port_id = [for p in equinix_metal_device.addon_eksa_node_dp.ports : p.id if p.name == "bond0"][0]
+  layer2  = true
+  bonded  = false
+}
+
+resource "equinix_metal_port" "addon_dp_eth0" {
+  depends_on = [equinix_metal_port.addon_dp_bond0]
+  port_id    = [for p in equinix_metal_device.addon_eksa_node_dp.ports : p.id if p.name == "eth0"][0]
+  bonded     = false
+  vlan_ids   = [module.eksa.eksa_vlan_id]
 }
 
 resource "null_resource" "readme" {
+  depends_on = [
+    equinix_metal_port.addon_dp_bond0
+  ]
 
   connection {
     type        = "ssh"

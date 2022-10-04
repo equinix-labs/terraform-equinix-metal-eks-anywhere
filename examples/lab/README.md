@@ -35,6 +35,7 @@ From a local copy of this `terraform-equinix-metal-eksa-on-baremetal` project:
 cd examples/lab
 cp terraform.tfvars.example terraform.tfvars
 vim terraform.tfvars
+cp users.csv.examples users.csv
 vim users.csv
 terraform init -upgrade
 terraform apply
@@ -63,10 +64,19 @@ Once logged in, they will find additional guidance in the `/root/README.md` file
 
 Be sure to begin provisioning nodes in advance of your lab. Each project can take 30m or longer to setup. Complications may arise requiring a project to be recreated, which can greatly extend the time required.
 
+### Detecting failures
+
+Watch the output logs for any errors. Progress can be deceptive because Terraform's DAG will queue up resources behind other resources. You may not see errors until the final script timeout (about 60m) or the execution is canceled.
+
+When a failure occurs on some environments, while other succeed, you should be able to detect the failed nodes with a command like `terraform state list | cut -f 2 -d\" | sort | uniq -c  | sort -n`.  This command lists how many resources were provisioned for each lab environment. Environments that have too few resources were not able to complete and can be replaced.
+
 ### Reprovisioning a Failed Cluster
 
 There are various failure scenarios. For each scenario there is am optimal retry approach and a last ditch approach.
 
+* `At least one Admin is required.; Cannot remove the Organization Owner`
+  Avoid adding any organization owner email addresses to the collaborator email list. Consider creating a new account using email aliases, for example, if your email address is "example@example.com", "example+eks001@example.com" may also be used in some server environments.
+  To clear the state of an organization owner that was added as a collaborator, run `terraform state rm 'module.lab["me@example.com"].equinix_metal_organization_member.user[0]`, remove the email address from the email list, and run `terraform apply`.
 * eksa-admin failed to provision
   <!-- TODO: fix notes -->
 * nodes failed to provision
@@ -79,6 +89,8 @@ There are various failure scenarios. For each scenario there is am optimal retry
   ```
 
   When building a large lab, you may need to replace several environments. Identify and taint all of the failed environments using this script and then run `terraform apply`. If you inadvertantly mark the wrong resources, rerun the command with "untaint" at the end of the command (`./replace email@address.here untaint`). Participants will need to check their email and accept a new invitation to the project as the old project will be deleted.
+
+  To prevent sending invitations until all environments have been successfully created, set the variable `send_invites` to `false` until ready, then set the variable to `true` and run `terraform apply` to only send out the invitations.  This can also be used to reduce the window of time participants have access to the environment.
 
   Terraform taints can be performed more selectively based on the failed step. For example, it should be sufficient to taint failed nodes and the `create_cluster` execution in some cases. In the future, guidance may be offered by this README.md for specific scenarios. For now each ifailed project must be replaced in its entirety when it has failed.
 

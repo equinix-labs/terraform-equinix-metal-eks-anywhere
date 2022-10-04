@@ -44,22 +44,21 @@ resource "equinix_metal_device" "eksa_node_cp" {
 }
 
 # Convert eksa nodes to Layer2-Unbonded (Layer2-Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names)
-resource "equinix_metal_device_network_type" "eksa_node_cp_network_type" {
+resource "equinix_metal_port" "cp_bond0" {
   count = var.cp_device_count
 
-  device_id = equinix_metal_device.eksa_node_cp[count.index].id
-  type      = "layer2-individual"
+  port_id = [for p in equinix_metal_device.eksa_node_cp[count.index].ports : p.id if p.name == "bond0"][0]
+  layer2  = true
+  bonded  = false
 }
 
-# Attach VLAN to eksa nodes
-resource "equinix_metal_port_vlan_attachment" "eksa_node_cp_vlan_attach" {
+resource "equinix_metal_port" "cp_eth0" {
   count = var.cp_device_count
 
-  device_id = equinix_metal_device.eksa_node_cp[count.index].id
-  port_name = "eth0"
-  vlan_vnid = equinix_metal_vlan.provisioning_vlan.vxlan
-
-  depends_on = [equinix_metal_device_network_type.eksa_node_cp_network_type]
+  depends_on = [equinix_metal_port.cp_bond0]
+  port_id    = [for p in equinix_metal_device.eksa_node_cp[count.index].ports : p.id if p.name == "eth0"][0]
+  bonded     = false
+  vlan_ids   = [equinix_metal_vlan.provisioning_vlan.id]
 }
 
 ######################
@@ -84,22 +83,21 @@ resource "equinix_metal_device" "eksa_node_dp" {
 }
 
 # Convert eksa nodes to Layer2-Unbonded (Layer2-Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names)
-resource "equinix_metal_device_network_type" "eksa_node_dp_network_type" {
+resource "equinix_metal_port" "dp_bond0" {
   count = var.dp_device_count
 
-  device_id = equinix_metal_device.eksa_node_dp[count.index].id
-  type      = "layer2-individual"
+  port_id = [for p in equinix_metal_device.eksa_node_dp[count.index].ports : p.id if p.name == "bond0"][0]
+  layer2  = true
+  bonded  = false
 }
 
-# Attach VLAN to eksa nodes
-resource "equinix_metal_port_vlan_attachment" "eksa_node_dp_vlan_attach" {
+resource "equinix_metal_port" "dp_eth0" {
   count = var.dp_device_count
 
-  device_id = equinix_metal_device.eksa_node_dp[count.index].id
-  port_name = "eth0"
-  vlan_vnid = equinix_metal_vlan.provisioning_vlan.vxlan
-
-  depends_on = [equinix_metal_device_network_type.eksa_node_dp_network_type]
+  depends_on = [equinix_metal_port.dp_bond0]
+  port_id    = [for p in equinix_metal_device.eksa_node_dp[count.index].ports : p.id if p.name == "eth0"][0]
+  bonded     = false
+  vlan_ids   = [equinix_metal_vlan.provisioning_vlan.id]
 }
 
 ######################
@@ -160,19 +158,11 @@ resource "equinix_metal_device" "eksa_admin" {
   depends_on = [equinix_metal_ssh_key.ssh_pub_key]
 }
 
-# Convert eksa nodes to hybrid-bonded to keep internet ssh access for admins and still let attach VLANs
-resource "equinix_metal_device_network_type" "eksa_admin_network_type" {
-  device_id = equinix_metal_device.eksa_admin.id
-  type      = "hybrid"
-}
-
-# Attach VLAN to eksa-admin
-resource "equinix_metal_port_vlan_attachment" "eksa_admin_vlan_attach" {
-  device_id = equinix_metal_device.eksa_admin.id
-  port_name = "bond0"
-  vlan_vnid = equinix_metal_vlan.provisioning_vlan.vxlan
-
-  depends_on = [equinix_metal_device_network_type.eksa_admin_network_type]
+resource "equinix_metal_port" "eksa_admin_bond0" {
+  port_id  = [for p in equinix_metal_device.eksa_admin.ports : p.id if p.name == "bond0"][0]
+  layer2   = false
+  bonded   = true
+  vlan_ids = [equinix_metal_vlan.provisioning_vlan.id]
 }
 
 ################################
@@ -180,6 +170,11 @@ resource "equinix_metal_port_vlan_attachment" "eksa_admin_vlan_attach" {
 ################################
 
 resource "null_resource" "wait_for_cloud_init" {
+  depends_on = [
+    equinix_metal_port.eksa_admin_bond0,
+    equinix_metal_port.dp_bond0,
+    equinix_metal_port.cp_bond0,
+  ]
   connection {
     type        = "ssh"
     user        = "root"
@@ -293,8 +288,5 @@ resource "null_resource" "create_cluster" {
 
   depends_on = [
     null_resource.wait_for_cloud_init,
-    equinix_metal_port_vlan_attachment.eksa_admin_vlan_attach,
-    equinix_metal_port_vlan_attachment.eksa_node_cp_vlan_attach,
-    equinix_metal_port_vlan_attachment.eksa_node_dp_vlan_attach
   ]
 }
