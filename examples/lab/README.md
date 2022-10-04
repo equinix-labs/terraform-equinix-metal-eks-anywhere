@@ -88,7 +88,9 @@ There are various failure scenarios. For each scenario there is am optimal retry
   ./replace.sh email@address.here
   ```
 
-  When building a large lab, you may need to replace several environments. Identify and taint all of the failed environments using this script and then run `terraform apply`. If you inadvertantly mark the wrong resources, rerun the command with "untaint" at the end of the command (`./replace email@address.here untaint`). Participants will need to check their email and accept a new invitation to the project as the old project will be deleted.
+  When building a large lab, you may need to replace several environments. Identify and taint all of the failed environments using this script and then run `terraform apply`. Keep in mind that the replaced nodes will need to catch up to the existing nodes. It may be preferable to create a separate "lab" Terraform directory and move the failed environments from the old CSV to a CSV in that folder.
+
+  If you inadvertantly mark the wrong resources, rerun the command with "untaint" at the end of the command (`./replace email@address.here untaint`). Participants will need to check their email and accept a new invitation to the project as the old project will be deleted.
 
   To prevent sending invitations until all environments have been successfully created, set the variable `send_invites` to `false` until ready, then set the variable to `true` and run `terraform apply` to only send out the invitations.  This can also be used to reduce the window of time participants have access to the environment.
 
@@ -105,6 +107,8 @@ There are various failure scenarios. For each scenario there is am optimal retry
       * When the node is provisioned, obtain the MAC address and choose an available IP from the IP block (usually this is the fifth address in the block, ie. gateway address + 5).
       * Add these values to the hardware.csv file on the eksa-admin machine.
       * Follow the normal steps for adding a node to the cluster.
+
+  If a project removed from the CSV file can not be fully deleted because one of the servers is busy deleting, run `./replace.sh the.deleted.project@example.com rm` to remove the environment from Terraform state.
 
 ## Terminating the Lab
 
