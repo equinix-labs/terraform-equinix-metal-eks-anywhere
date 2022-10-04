@@ -1,11 +1,27 @@
 ## Build hardware csv
 
+Put the following in a new csv file `hardware2.csv`
+
 ```csv
 hostname,vendor,mac,ip_address,gateway,netmask,nameservers,disk,labels
 ${node.hostname},Equinix,%{ for port in node.ports}%{ if port.name == "eth0"}${port.mac}%{ endif }%{ endfor },${ip},${gateway},${netmask},8.8.8.8,/dev/sda,type=dp
 ```
 
 ## Add the node to eks-a
+
+Get your machine deployment group name:
+
+```sh
+kubectl get machinedeployments -n eksa-system
+```
+
+Use that group name along with the csv file to scale the cluster.
+
+```sh
+eksctl anywhere generate hardware -z hardware2.csv > cluster-scale.yaml
+Edit cluster-scale.yaml and remove the two bmc items.
+kubectl scale machinedeployments -n eksa-system <Your MachineDeployment Group Name> --replicas 1
+```
 
 ## Reboot node
 
