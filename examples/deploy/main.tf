@@ -11,6 +11,7 @@ terraform {
     }
   }
 }
+
 module "eksa" {
   source                  = "../.."
   metal_api_token         = var.metal_api_token
@@ -27,11 +28,5 @@ module "eksa" {
   eksa_version            = var.eksa_version
   bottlerocket_image_url  = var.bottlerocket_image_url
   tinkerbell_images       = var.tinkerbell_images
-}
-
-variable "metal_api_token" {
-  description = "Equinix Metal user api token"
-  type        = string
-  sensitive   = true
 }
 
