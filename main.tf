@@ -198,6 +198,7 @@ resource "null_resource" "create_cluster" {
     user        = "root"
     host        = equinix_metal_device.eksa_admin.network[0].address
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+    timeout     = var.create_cluster_timeout
   }
 
   provisioner "file" {

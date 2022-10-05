@@ -103,3 +103,8 @@ variable "permit_root_ssh_password" {
   default     = false
   type        = bool
 }
+
+variable "create_cluster_timeout" {
+  description = "Time to wait for the create_cluster phase (example: 25m)"
+  default     = "25m"
+}
