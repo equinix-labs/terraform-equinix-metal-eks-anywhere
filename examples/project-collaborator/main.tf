@@ -49,6 +49,7 @@ module "eksa" {
   cp_device_type           = var.cp_device_type
   dp_device_type           = var.dp_device_type
   permit_root_ssh_password = var.permit_root_ssh_password
+  plan_nic                 = var.plan_nic
 }
 
 resource "equinix_metal_device" "addon_eksa_node_dp" {
