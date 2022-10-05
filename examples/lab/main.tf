@@ -33,4 +33,5 @@ module "lab" {
   dp_device_type           = trimspace(each.value.plan)
   permit_root_ssh_password = var.permit_root_ssh_password
   send_invites             = var.send_invites
+  plan_nic                 = var.plan_nic
 }
