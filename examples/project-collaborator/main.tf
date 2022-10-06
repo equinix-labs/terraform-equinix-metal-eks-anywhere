@@ -80,7 +80,8 @@ resource "equinix_metal_port" "addon_dp_eth0" {
 
 resource "null_resource" "readme" {
   depends_on = [
-    equinix_metal_port.addon_dp_bond0
+    equinix_metal_port.addon_dp_bond0,
+    module.eksa
   ]
 
   connection {
