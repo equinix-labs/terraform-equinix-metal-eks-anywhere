@@ -5,8 +5,14 @@ command=${2:-taint}
 resources="${3}"
 
 if [ "$command" == "rm" ]; then
-	echo "NOTE: Make sure '$module' is removed from the CSV file!"
-	command="state rm";
+	echo "Remove ${resources} resources for '$1' from Terraform state? You may also want to update the CSV file and manually delete the resources (or not). Proceed with caution."
+
+	read -p "Remove? [y|n] " yn
+	case $yn in
+		[Yy]*) command="state rm";;
+		*) exit;;
+	esac
+
 fi
 
 # terraform state list | sed -E -e 's/\[/["/g' -e 's/\]/"]/g' -e 's/\["([0-9]+)"\]/[\1]/g' | 
