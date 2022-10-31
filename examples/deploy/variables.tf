@@ -89,3 +89,14 @@ variable "tinkerbell_images" {
     reboot     = optional(string, "public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-17")
   })
 }
+
+variable "permit_root_ssh_password" {
+  description = "Enable root SSH logins via password. This is intended for lab environments."
+  default     = false
+  type        = bool
+}
+
+variable "create_cluster_timeout" {
+  description = "Time to wait for the create_cluster phase (example: 25m)"
+  default     = "25m"
+}
