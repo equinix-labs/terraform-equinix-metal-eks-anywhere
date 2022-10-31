@@ -27,13 +27,3 @@ variable "csv_file" {
   description = "Path to a CSV file containing a list of projects to provision: email,metro,plan. Email address is used as the project name and the collaborator. Metro and plan are used to provision the project."
   default     = "users.csv"
 }
-
-variable "plan_nic" {
-  description = "Map of plans to expected NIC device name."
-  default = {
-    "m3.small.x86"  = "enp1s0f0np0"
-    "c2.medium.x86" = "enp131s0f0np0"
-  }
-  type = map(string)
-}
-

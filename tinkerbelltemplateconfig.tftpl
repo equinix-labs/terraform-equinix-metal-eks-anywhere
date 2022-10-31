@@ -25,7 +25,7 @@ spec:
 
             # "eno1" is the interface name
             # Users may turn on dhcp4 and dhcp6 via boolean
-            [${NIC_NAME}]
+            [eth0]
             dhcp4 = true
             dhcp6 = false
             # Define this interface as the "primary" interface
@@ -49,6 +49,9 @@ spec:
           BOOTCONFIG_CONTENTS: |
             kernel {
                 console = "ttyS1,115200n8"
+            }
+            init {
+                net.ifnames=0
             }
           DEST_DISK: /dev/sda12
           DEST_PATH: /bootconfig.data

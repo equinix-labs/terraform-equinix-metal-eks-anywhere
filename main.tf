@@ -262,7 +262,6 @@ resource "null_resource" "create_cluster" {
       TINKERBELL_IMAGE_IMAGE2DISK = var.tinkerbell_images.image2disk,
       TINKERBELL_IMAGES_WRITEFILE = var.tinkerbell_images.writefile,
       TINKERBELL_IMAGES_REBOOT    = var.tinkerbell_images.reboot
-      NIC_NAME                    = replace(var.plan_nic[var.cp_device_type], ".", "-")
     })
   }
 
@@ -276,7 +275,6 @@ resource "null_resource" "create_cluster" {
       TINKERBELL_IMAGE_IMAGE2DISK = var.tinkerbell_images.image2disk,
       TINKERBELL_IMAGES_WRITEFILE = var.tinkerbell_images.writefile,
       TINKERBELL_IMAGES_REBOOT    = var.tinkerbell_images.reboot
-      NIC_NAME                    = replace(var.plan_nic[var.dp_device_type], ".", "-")
     })
   }
 
