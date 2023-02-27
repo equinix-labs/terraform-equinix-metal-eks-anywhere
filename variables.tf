@@ -65,8 +65,8 @@ variable "tags" {
 variable "eksa_version" {
   description = "EKS-A version to deploy"
   default = {
-    release        = "0.11.3"
-    release_number = 20
+    release        = "0.14.2"
+    release_number = 28
   }
   type = object({
     release        = string
@@ -76,16 +76,16 @@ variable "eksa_version" {
 
 variable "bottlerocket_image_url" {
   description = "URL of the Bottlerocket OS image to use"
-  default     = "https://anywhere-assets.eks.amazonaws.com/releases/bundles/17/artifacts/raw/1-23/bottlerocket-v1.23.9-eks-d-1-23-5-eks-a-17-amd64.img.gz"
+  default     = "https://anywhere-assets.eks.amazonaws.com/releases/bundles/28/artifacts/raw/1-25/bottlerocket-v1.25.6-eks-d-1-25-5-eks-a-28-amd64.img.gz"
 }
 
 variable "tinkerbell_images" {
   description = "Tinkerbell images to use"
   default     = {} # I'm not sure if we need this. We may get the type defined defaults without it.
   type = object({
-    image2disk = optional(string, "public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-17")
-    writefile  = optional(string, "public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-17")
-    reboot     = optional(string, "public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-17")
+    image2disk = optional(string, "public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-28")
+    writefile  = optional(string, "public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-28")
+    reboot     = optional(string, "public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-28")
   })
 }
 
