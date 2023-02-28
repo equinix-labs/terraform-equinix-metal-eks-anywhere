@@ -1,29 +1,5 @@
 ## template: jinja
 #cloud-config
-apt:
-  sources: 
-    docker.list:
-      source: deb [arch=amd64] https://download.docker.com/linux/ubuntu $RELEASE stable
-      keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
-    kubernetes.list:
-      source: deb [arch=amd64] https://apt.kubernetes.io/ kubernetes-xenial main
-      keyid: 7F92E05B31093BEF5A3C2D38FEEA9169307EA071
-    kubernetes-key-2:
-      keyid: 59FE0256827269DC81578F928B57C5C2836F4BEB 
-
-packages:
-- apt-transport-https
-- ca-certificates
-- curl
-- make
-- gnupg
-- lsb-release
-- kubectl
-- jq
-- gnupg-agent
-- gnupg2
-- software-properties-common
-- unattended-upgrades
 
 write_files:
 - content: |
@@ -38,18 +14,19 @@ write_files:
 
 runcmd:
 - |
-  export DEBIAN_FRONTEND=noninteractive
-  apt-get remove -y docker docker-engine containerd runc
-  apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
-  snap install yq
   export HOME="/root"
   systemctl restart networking
   sleep 10
-  curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" --silent --location | tar xz -C /tmp
-  mv /tmp/eksctl /usr/local/bin/
-  export EKSA_RELEASE="${EKSA_VERSION_RELEASE}" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=${EKSA_VERSION_RELEASE_NUMBER}
-  curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/$RELEASE_NUMBER/artifacts/eks-a/v$EKSA_RELEASE/$OS/amd64/eksctl-anywhere-v$EKSA_RELEASE-$OS-amd64.tar.gz" --silent --location | tar xz ./eksctl-anywhere
-  mv ./eksctl-anywhere /usr/local/bin/
-  sed -i 's,^//\s"$${distro_id}:$${distro_codename}-updates";,        "$${distro_id}:$${distro_codename}-updates";,' /etc/apt/apt.conf.d/50unattended-upgrades
-  sed -i 's,^//Unattended-Upgrade::Automatic-Reboot "false";,Unattended-Upgrade::Automatic-Reboot "true";,' /etc/apt/apt.conf.d/50unattended-upgrades
-  sed -i "s,^//Unattended-Upgrade::Automatic-Reboot-Time \"02:00\";,Unattended-Upgrade::Automatic-Reboot-Time $(date +"%H:%M" --date="12 hours");," /etc/apt/apt.conf.d/50unattended-upgrades
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get update 
+  apt-get install ca-certificates curl gnupg lsb-release -y
+  sudo mkdir -m 0755 -p /etc/apt/keyrings
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  apt-get update
+  apt-get remove -y docker docker-engine containerd runc
+  apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
+  curl -fsSLo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && chmod +x /usr/local/bin/yq
+  curl -fsSLo /usr/local/bin/kubectl "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && chmod +x /usr/local/bin/kubectl
+  curl -fsSL "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz" | tar xzO > /usr/local/bin/eksctl && chmod +x /usr/local/bin/eksctl
+  curl -fsSL "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${EKSA_VERSION_RELEASE_NUMBER}/artifacts/eks-a/v${EKSA_VERSION_RELEASE}/linux/amd64/eksctl-anywhere-v${EKSA_VERSION_RELEASE}-linux-amd64.tar.gz" | tar xzO ./eksctl-anywhere > /usr/local/bin/eksctl-anywhere && chmod +x /usr/local/bin/eksctl-anywhere
