@@ -62,11 +62,16 @@ variable "tags" {
   default     = ["eksa", "terraform"]
 }
 
+variable "kubernetes_version" {
+  description = "Kubernetes version to deploy"
+  default     = "1.25"
+}
+
 variable "eksa_version" {
   description = "EKS-A version to deploy"
   default = {
     release        = "0.14.2"
-    release_number = 28
+    release_number = 29
   }
   type = object({
     release        = string

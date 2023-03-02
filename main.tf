@@ -241,7 +241,8 @@ resource "null_resource" "create_cluster" {
       node_device_os           = var.node_device_os,
       pool_admin               = local.pool_admin,
       api_token                = var.metal_api_token,
-      permit_root_ssh_password = var.permit_root_ssh_password
+      permit_root_ssh_password = var.permit_root_ssh_password,
+      kubernetes_version       = var.kubernetes_version
       nodes_id = zipmap(
         local.node_ids,
         formatlist("%s@sos.%s.platformequinix.com",
