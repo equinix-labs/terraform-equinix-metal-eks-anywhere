@@ -15,7 +15,9 @@ write_files:
 runcmd:
 - |
   export HOME="/root"
-  systemctl restart networking
+  ip link add link bond0 name bond0.${VLAN_VNID} type vlan id ${VLAN_VNID}
+  ip addr add ${ADMIN_IP}/${CIDR} dev bond0.${VLAN_VNID}
+  ip link set dev bond0.${VLAN_VNID} up
   sleep 10
   export DEBIAN_FRONTEND=noninteractive
   apt-get update 

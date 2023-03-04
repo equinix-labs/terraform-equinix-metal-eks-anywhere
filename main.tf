@@ -153,6 +153,7 @@ resource "equinix_metal_device" "eksa_admin" {
     EKSA_VERSION_RELEASE_NUMBER = var.eksa_version.release_number
     NETMASK                     = equinix_metal_reserved_ip_block.public_ips.netmask
     VLAN_VNID                   = equinix_metal_vlan.provisioning_vlan.vxlan
+    CIDR                        = equinix_metal_reserved_ip_block.public_ips.cidr
   })
 
   depends_on = [equinix_metal_ssh_key.ssh_pub_key]
