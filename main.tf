@@ -68,11 +68,11 @@ resource "equinix_metal_port" "cp_eth0" {
 # Create eksa-node/tinkerbell-worker devices for k8s data-plane
 # Note that the ipxe-script-url doesn't actually get used in this process, we're just setting it
 # as it's a requirement for using the custom_ipxe operating system type.
-resource "equinix_metal_device" "eksa_node_dp" {
-  count = var.dp_device_count
+resource "equinix_metal_device" "eksa_node_worker" {
+  count = var.worker_device_count
 
-  hostname         = format("eksa-${random_string.resource_suffix.result}-node-dp-%03d", count.index + 1)
-  plan             = var.dp_device_type
+  hostname         = format("eksa-${random_string.resource_suffix.result}-node-worker-%03d", count.index + 1)
+  plan             = var.worker_device_type
   metro            = var.metro
   operating_system = "custom_ipxe"
   ipxe_script_url  = "http://${local.pool_admin}/ipxe/"
@@ -83,19 +83,19 @@ resource "equinix_metal_device" "eksa_node_dp" {
 }
 
 # Convert eksa nodes to Layer2-Unbonded (Layer2-Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names)
-resource "equinix_metal_port" "dp_bond0" {
-  count = var.dp_device_count
+resource "equinix_metal_port" "worker_bond0" {
+  count = var.worker_device_count
 
-  port_id = [for p in equinix_metal_device.eksa_node_dp[count.index].ports : p.id if p.name == "bond0"][0]
+  port_id = [for p in equinix_metal_device.eksa_node_worker[count.index].ports : p.id if p.name == "bond0"][0]
   layer2  = true
   bonded  = false
 }
 
-resource "equinix_metal_port" "dp_eth0" {
-  count = var.dp_device_count
+resource "equinix_metal_port" "worker_eth0" {
+  count = var.worker_device_count
 
-  depends_on = [equinix_metal_port.dp_bond0]
-  port_id    = [for p in equinix_metal_device.eksa_node_dp[count.index].ports : p.id if p.name == "eth0"][0]
+  depends_on = [equinix_metal_port.worker_bond0]
+  port_id    = [for p in equinix_metal_device.eksa_node_worker[count.index].ports : p.id if p.name == "eth0"][0]
   bonded     = false
   vlan_ids   = [equinix_metal_vlan.provisioning_vlan.id]
 }
@@ -173,7 +173,7 @@ resource "equinix_metal_port" "eksa_admin_bond0" {
 resource "null_resource" "wait_for_cloud_init" {
   depends_on = [
     equinix_metal_port.eksa_admin_bond0,
-    equinix_metal_port.dp_bond0,
+    equinix_metal_port.worker_bond0,
     equinix_metal_port.cp_bond0,
   ]
   connection {
@@ -209,11 +209,11 @@ resource "null_resource" "create_cluster" {
 
   provisioner "file" {
     content = templatefile("${path.module}/hardware.csv.tftpl", {
-      nodes_cp = equinix_metal_device.eksa_node_cp
-      nodes_dp = equinix_metal_device.eksa_node_dp
-      nw_cidr  = local.pool_nw_cidr
-      gateway  = equinix_metal_reserved_ip_block.public_ips.gateway
-      netmask  = equinix_metal_reserved_ip_block.public_ips.netmask
+      nodes_cp     = equinix_metal_device.eksa_node_cp
+      nodes_worker = equinix_metal_device.eksa_node_worker
+      nw_cidr      = local.pool_nw_cidr
+      gateway      = equinix_metal_reserved_ip_block.public_ips.gateway
+      netmask      = equinix_metal_reserved_ip_block.public_ips.netmask
     })
     destination = "/root/hardware.csv"
   }
@@ -236,9 +236,9 @@ resource "null_resource" "create_cluster" {
       pool_vip                 = local.pool_vip,
       ssh_key_name             = local.ssh_key_name,
       cp_template              = replace("cp-${var.cluster_name}-${var.cp_device_type}", ".", "-"),
-      dp_template              = replace("dp-${var.cluster_name}-${var.dp_device_type}", ".", "-"),
+      worker_template          = replace("worker-${var.cluster_name}-${var.worker_device_type}", ".", "-"),
       cp_device_count          = var.cp_device_count,
-      dp_device_count          = var.dp_device_count,
+      worker_device_count      = var.worker_device_count,
       node_device_os           = var.node_device_os,
       pool_admin               = local.pool_admin,
       api_token                = var.metal_api_token,
@@ -248,7 +248,7 @@ resource "null_resource" "create_cluster" {
         local.node_ids,
         formatlist("%s@sos.%s.platformequinix.com",
           local.node_ids,
-          concat(equinix_metal_device.eksa_node_cp[*].deployed_facility, equinix_metal_device.eksa_node_dp[*].deployed_facility)
+          concat(equinix_metal_device.eksa_node_cp[*].deployed_facility, equinix_metal_device.eksa_node_worker[*].deployed_facility)
         )
       )
     })
@@ -269,16 +269,16 @@ resource "null_resource" "create_cluster" {
   }
 
   provisioner "file" {
-    destination = "/root/dp-tinkerbelltemplateconfig.yaml"
+    destination = "/root/worker-tinkerbelltemplateconfig.yaml"
     content = templatefile("${path.module}/tinkerbelltemplateconfig.tftpl", {
       POOL_ADMIN                  = local.pool_admin,
       TINK_VIP                    = local.tink_vip,
       BOTTLEROCKET_IMAGE_URL      = var.bottlerocket_image_url,
-      TEMPLATE_NAME               = replace("dp-${var.cluster_name}-${var.dp_device_type}", ".", "-"),
+      TEMPLATE_NAME               = replace("worker-${var.cluster_name}-${var.worker_device_type}", ".", "-"),
       TINKERBELL_IMAGE_IMAGE2DISK = var.tinkerbell_images.image2disk,
       TINKERBELL_IMAGES_WRITEFILE = var.tinkerbell_images.writefile,
       TINKERBELL_IMAGES_REBOOT    = var.tinkerbell_images.reboot
-      NIC_NAME                    = replace(var.plan_nic[var.dp_device_type], ".", "-")
+      NIC_NAME                    = replace(var.plan_nic[var.worker_device_type], ".", "-")
     })
   }
 

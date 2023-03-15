@@ -46,12 +46,12 @@ variable "cp_device_count" {
   default     = 1
 }
 
-variable "dp_device_type" {
+variable "worker_device_type" {
   description = "Equinix Metal device type to deploy for data plane (worker) nodes"
   default     = "m3.small.x86"
 }
 
-variable "dp_device_count" {
+variable "worker_device_count" {
   type        = number
   description = "Number of baremetal data plane (worker) nodes"
   default     = 1

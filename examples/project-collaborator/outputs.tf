@@ -8,11 +8,11 @@ output "metal_project_api_key" {
 }
 
 output "eksa_addon_ip" {
-  value = equinix_metal_device.addon_eksa_node_dp.access_public_ipv4
+  value = equinix_metal_device.addon_eksa_node_worker.access_public_ipv4
 }
 
 output "eksa_addon_ports" {
-  value = equinix_metal_device.addon_eksa_node_dp.ports
+  value = equinix_metal_device.addon_eksa_node_worker.ports
 }
 
 output "eksa_admin_ip" {

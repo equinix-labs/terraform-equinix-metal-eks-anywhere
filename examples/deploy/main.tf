@@ -22,8 +22,8 @@ module "eksa" {
   node_device_os          = var.node_device_os
   cp_device_type          = var.cp_device_type
   cp_device_count         = var.cp_device_count
-  dp_device_type          = var.dp_device_type
-  dp_device_count         = var.dp_device_count
+  worker_device_type      = var.worker_device_type
+  worker_device_count     = var.worker_device_count
   tags                    = var.tags
   eksa_version            = var.eksa_version
   bottlerocket_image_url  = var.bottlerocket_image_url

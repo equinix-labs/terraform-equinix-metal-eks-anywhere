@@ -60,7 +60,7 @@ eksa_admin_ssh_key = "/Users/username/.ssh/my-eksa-cluster-xed"
 eksa_admin_ssh_user = "root"
 eksa_nodes_sos = tomap({
   "eksa-node-cp-001" = "b0e1426d-4d9e-4d01-bd5c-54065df61d67@sos.sv15.platformequinix.com"
-  "eksa-node-dp-001" = "84ffa9c7-84ce-46eb-97ff-2ae310fbb360@sos.sv15.platformequinix.com"
+  "eksa-node-worker-001" = "84ffa9c7-84ce-46eb-97ff-2ae310fbb360@sos.sv15.platformequinix.com"
 })
 ```
 
@@ -74,7 +74,7 @@ ssh -i $(terraform output -json | jq -r .eksa_admin_ssh_key.value) root@$(terraf
 root@eksa-admin:~# KUBECONFIG=/root/my-eksa-cluster/my-eksa-cluster-eks-a-cluster.kubeconfig kubectl  get nodes
 NAME               STATUS   ROLES                  AGE     VERSION
 eksa-node-cp-001   Ready    control-plane,master   7m56s   v1.22.10-eks-7dc61e8
-eksa-node-dp-001   Ready    <none>                 5m30s   v1.22.10-eks-7dc61e8
+eksa-node-worker-001   Ready    <none>                 5m30s   v1.22.10-eks-7dc61e8
 ```
 
 ## Manual Installation
@@ -219,12 +219,12 @@ The following tools will be needed on your local development environment where y
 
       for id in $(echo $node_ids); do
          # Configure only the first node as a control-panel node
-         if [ "$i" = 1 ]; then TYPE=cp; else TYPE=dp; fi; # change to 3 for HA
+         if [ "$i" = 1 ]; then TYPE=cp; else TYPE=worker; fi; # change to 3 for HA
          NODENAME="eks-node-00$i"
          let i++
          MAC=$(metal device get -i $id -o json | jq -r '.network_ports | .[] | select(.name == "eth0") | .data.mac')
          IP=$(python3 -c 'import ipaddress; print(str(ipaddress.IPv4Address("'${POOL_GW}'")+'$i'))')
-         echo "$NODENAME,Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8,/dev/sda,type=${TYPE}" >> hardware.csv
+         echo "$NODENAME,Equinix,${MAC},${IP},${POOL_GW},${POOL_NM},8.8.8.8|8.8.4.4,/dev/sda,type=${TYPE}" >> hardware.csv
       done
       ```
 
@@ -359,7 +359,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    ```sh
    spec:
      hardwareSelector:
-       type: dp
+       type: worker
    ```
 
 1. Change the templateRef for each TinkerbellMachineConfig section
