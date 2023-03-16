@@ -23,7 +23,7 @@ jobs:
     - name: Checkout from Github
       uses: actions/checkout@v3
     - name: Install Terraform
-      uses: hashicorp/setup-terraform@v1
+      uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: ${{ env.TF_VERSION }}
     - name: Check Terraform formatting
