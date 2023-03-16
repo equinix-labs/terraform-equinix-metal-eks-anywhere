@@ -77,6 +77,65 @@ eksa-node-cp-001   Ready    control-plane,master   7m56s   v1.22.10-eks-7dc61e8
 eksa-node-dp-001   Ready    <none>                 5m30s   v1.22.10-eks-7dc61e8
 ```
 
+## How to expand a cluster
+
+### Deploy an additional node
+
+```sh
+NEW_HOSTNAME="your new hostname"
+POOL_ADMIN="IP address of your admin machine"
+metal device create --plan m3.small.x86 --metro da --hostname $NEW_HOSTNAME 
+--ipxe-script-url http://$POOL_ADMIN/ipxe/ --operating-system custom_ipxe
+```
+
+Make note of the device's UUID, maybe use `metal device get` to list them.
+
+```sh
+DEVICE_ID="UUID you noted above"
+BOND0_PORT=$(metal devices get -i $DEVICE_ID -o json  | 
+jq -r '.network_ports [] | select(.name == "bond0") | .id')
+ETH0_PORT=$(metal devices get -i $DEVICE_ID -o json  | 
+jq -r '.network_ports [] | select(.name == "eth0") | .id')
+```
+
+```sh
+VLAN_ID="Your VLAN ID, likely 1000"
+metal port convert -i $BOND0_PORT  --layer2 --bonded=false --force
+metal port vlan -i $ETH0_PORT -a $VLAN_ID
+```
+
+### Build hardware csv
+
+Put the following in a new csv file `hardware2.csv`
+
+```csv
+hostname,mac,ip_address,gateway,netmask,nameservers,disk,labels
+<HOSTNAME>,<MAC_ADDRESS>,<IP>,<GATEWAY>,<NETMASK>,8.8.8.8|8.8.4.4,/dev/sda,type=worker
+```
+
+### Add the node to eks-a
+
+Get your machine deployment group name:
+
+```sh
+kubectl get machinedeployments -n eksa-system
+```
+
+Generate the kubernetes yaml from your hardware2.csv file:
+
+```sh
+eksctl anywhere generate hardware -z hardware2.csv > cluster-scale.yaml
+```
+
+Edit cluster-scale.yaml and remove the two bmc items.
+
+Use the machinedeployment group name along with the csv file to scale the cluster.
+
+```sh
+kubectl apply -f cluster-scale.yaml
+kubectl scale machinedeployments -n eksa-system <Your MachineDeployment Group Name> --replicas 1
+```
+
 ## Manual Installation
 
 > **Note**
@@ -196,7 +255,7 @@ The following tools will be needed on your local development environment where y
 
       for id in $(echo $node_ids); do
          let i++
-         BOND0_PORT=$(metal devices get -i $id -o json  | jq -r '.network_ports [] | select(.name == "bond0") | .id')
+        
          ETH0_PORT=$(metal devices get -i $id -o json  | jq -r '.network_ports [] | select(.name == "eth0") | .id')
          metal port convert -i $BOND0_PORT --layer2 --bonded=false --force
          metal port vlan -i $ETH0_PORT -a $VLAN_ID
