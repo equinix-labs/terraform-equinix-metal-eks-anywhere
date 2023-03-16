@@ -71,11 +71,43 @@ ssh -i $(terraform output -json | jq -r .eksa_admin_ssh_key.value) root@$(terraf
 ```
 
 ```sh
-root@eksa-admin:~# KUBECONFIG=/root/my-eksa-cluster/my-eksa-cluster-eks-a-cluster.kubeconfig kubectl  get nodes
+root@eksa-admin:~# kubectl get nodes
 NAME               STATUS   ROLES                  AGE     VERSION
 eksa-node-cp-001   Ready    control-plane,master   7m56s   v1.22.10-eks-7dc61e8
 eksa-node-dp-001   Ready    <none>                 5m30s   v1.22.10-eks-7dc61e8
 ```
+
+## (Optional) Connect the cluster to EKS with EKS Connector
+
+This section covers the basic steps to connect your cluster to EKS with the EKS Connector. There are many more details (include pre-requisites like IAM permissions) in the [EKS Connector Documentation](https://docs.aws.amazon.com/eks/latest/userguide/eks-connector.html).
+
+Connect to the eksa-admin host.
+
+```sh
+ssh -i $(terraform output -json | jq -r .eksa_admin_ssh_key.value) root@$(terraform output -json | jq -r .eksa_admin_ip.value)
+```
+
+Follow the [AWS documentation](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html) and set the environment variables with your authentication info for AWS. For example:
+
+```sh
+export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+export AWS_DEFAULT_REGION=us-west-2
+```
+
+Now use eksctl to register the cluster
+
+```sh
+eksctl register cluster --name my-cluster --provider my-provider --region region-code
+```
+
+If it succeeded, the output will show several .yaml files that were created and need to be registered with the cluster. For example, at the time of writing, applying those files would be done like so:
+
+```sh
+kubectl apply -f eks-connector.yaml,eks-connector-clusterrole.yaml,eks-connector-console-dashboard-full-access-group.yaml
+```
+
+Even more info can be found at the [eksctl documentation](https://eksctl.io/usage/eks-connector/).
 
 ## Manual Installation
 
