@@ -4,7 +4,7 @@ Put the following in a new csv file `hardware2.csv`
 
 ```csv
 hostname,vendor,mac,ip_address,gateway,netmask,nameservers,disk,labels
-${node.hostname},Equinix,%{ for port in node.ports}%{ if port.name == "eth0"}${port.mac}%{ endif }%{ endfor },${ip},${gateway},${netmask},8.8.8.8,/dev/sda,type=dp
+${node.hostname},Equinix,%{ for port in node.ports}%{ if port.name == "eth0"}${port.mac}%{ endif }%{ endfor },${ip},${gateway},${netmask},8.8.8.8|8.8.4.4,/dev/sda,type=worker
 ```
 
 ## Add the node to eks-a

@@ -98,7 +98,7 @@ There are various failure scenarios. For each scenario there is am optimal retry
 
   * cp_node failed to provision
     <!-- TODO: fix notes -->
-  * dp_node failed to provision
+  * worker_node failed to provision
     <!-- TODO: fix notes -->
   * extra node failed to provision
     * The participant can do these steps themselves.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-if [ "$1" == "" ]; then echo "Usage: $0 \"email\" [*taint|untaint|rm] [admin|cp|dp|addon]"; exit 1; fi
+if [ "$1" == "" ]; then echo "Usage: $0 \"email\" [*taint|untaint|rm] [admin|cp|worker|addon]"; exit 1; fi
 module="${1}"
 command=${2:-taint}
 resources="${3}"

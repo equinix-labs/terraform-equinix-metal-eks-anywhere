@@ -47,14 +47,14 @@ module "eksa" {
   metro                    = var.metro
   provisioner_device_type  = var.provisioner_device_type
   cp_device_type           = var.cp_device_type
-  dp_device_type           = var.dp_device_type
+  worker_device_type       = var.worker_device_type
   permit_root_ssh_password = var.permit_root_ssh_password
   plan_nic                 = var.plan_nic
 }
 
-resource "equinix_metal_device" "addon_eksa_node_dp" {
-  hostname         = "eksa-addon-node-dp"
-  plan             = var.dp_device_type
+resource "equinix_metal_device" "addon_eksa_node_worker" {
+  hostname         = "eksa-addon-node-worker"
+  plan             = var.worker_device_type
   metro            = var.metro
   operating_system = "custom_ipxe"
   ipxe_script_url  = "http://${module.eksa.eksa_pool_admin}/ipxe/"
@@ -65,22 +65,22 @@ resource "equinix_metal_device" "addon_eksa_node_dp" {
 }
 
 # Convert eksa nodes to Layer2-Unbonded (Layer2-Bonded would require custom Tinkerbell workflow steps to define the LACP bond for the correct interface names)
-resource "equinix_metal_port" "addon_dp_bond0" {
-  port_id = [for p in equinix_metal_device.addon_eksa_node_dp.ports : p.id if p.name == "bond0"][0]
+resource "equinix_metal_port" "addon_worker_bond0" {
+  port_id = [for p in equinix_metal_device.addon_eksa_node_worker.ports : p.id if p.name == "bond0"][0]
   layer2  = true
   bonded  = false
 }
 
-resource "equinix_metal_port" "addon_dp_eth0" {
-  depends_on = [equinix_metal_port.addon_dp_bond0]
-  port_id    = [for p in equinix_metal_device.addon_eksa_node_dp.ports : p.id if p.name == "eth0"][0]
+resource "equinix_metal_port" "addon_worker_eth0" {
+  depends_on = [equinix_metal_port.addon_worker_bond0]
+  port_id    = [for p in equinix_metal_device.addon_eksa_node_worker.ports : p.id if p.name == "eth0"][0]
   bonded     = false
   vlan_ids   = [module.eksa.eksa_vlan_id]
 }
 
 resource "null_resource" "readme" {
   depends_on = [
-    equinix_metal_port.addon_dp_bond0,
+    equinix_metal_port.addon_worker_bond0,
     module.eksa
   ]
 
@@ -93,7 +93,7 @@ resource "null_resource" "readme" {
 
   provisioner "file" {
     content = templatefile("${path.module}/README.md.tftpl", {
-      node    = equinix_metal_device.addon_eksa_node_dp
+      node    = equinix_metal_device.addon_eksa_node_worker
       ip      = cidrhost(module.eksa.eksa_public_ips_cidr, 5)
       gateway = module.eksa.eksa_public_ips_gateway
       netmask = module.eksa.eksa_public_ips_netmask
