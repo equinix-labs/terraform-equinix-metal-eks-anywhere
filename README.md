@@ -77,6 +77,67 @@ eksa-node-cp-001   Ready    control-plane,master   7m56s   v1.22.10-eks-7dc61e8
 eksa-node-worker-001   Ready    <none>                 5m30s   v1.22.10-eks-7dc61e8
 ```
 
+## How to expand a cluster
+
+This section is an example of adding a new node of the exact same time as the previous nodes to the cluster. For example, if you use project defaults you'll want to add a m3.small.x86 as the new node. Also, this example is just adding a new worker node for simplicity. Adding control plane nodes is possible, but requires thinking through how many nodes are added as well as labeling them as `type=cp` instead of `type=worker`.
+
+### Deploy an additional node
+
+```sh
+NEW_HOSTNAME="your new hostname"
+POOL_ADMIN="IP address of your admin machine"
+metal device create --plan m3.small.x86 --metro da --hostname $NEW_HOSTNAME 
+--ipxe-script-url http://$POOL_ADMIN/ipxe/ --operating-system custom_ipxe
+```
+
+Make note of the device's UUID, maybe use `metal device get` to list them.
+
+```sh
+DEVICE_ID="UUID you noted above"
+BOND0_PORT=$(metal devices get -i $DEVICE_ID -o json  | 
+jq -r '.network_ports [] | select(.name == "bond0") | .id')
+ETH0_PORT=$(metal devices get -i $DEVICE_ID -o json  | 
+jq -r '.network_ports [] | select(.name == "eth0") | .id')
+```
+
+```sh
+VLAN_ID="Your VLAN ID, likely 1000"
+metal port convert -i $BOND0_PORT  --layer2 --bonded=false --force
+metal port vlan -i $ETH0_PORT -a $VLAN_ID
+```
+
+### Build hardware csv
+
+Put the following in a new csv file `hardware2.csv`
+
+```csv
+hostname,mac,ip_address,gateway,netmask,nameservers,disk,labels
+<HOSTNAME>,<MAC_ADDRESS>,<IP>,<GATEWAY>,<NETMASK>,8.8.8.8|8.8.4.4,/dev/sda,type=worker
+```
+
+### Add the node to eks-a
+
+Get your machine deployment group name:
+
+```sh
+kubectl get machinedeployments -n eksa-system
+```
+
+Generate the kubernetes yaml from your hardware2.csv file:
+
+```sh
+eksctl anywhere generate hardware -z hardware2.csv > cluster-scale.yaml
+```
+
+Edit cluster-scale.yaml and remove the two bmc items.
+
+Use the machinedeployment group name along with the csv file to scale the cluster.
+
+```sh
+kubectl apply -f cluster-scale.yaml
+kubectl scale machinedeployments -n eksa-system <Your MachineDeployment Group Name> --replicas 1
+```
+
 ## (Optional) Connect the cluster to EKS with EKS Connector
 
 This section covers the basic steps to connect your cluster to EKS with the EKS Connector. There are many more details (include pre-requisites like IAM permissions) in the [EKS Connector Documentation](https://docs.aws.amazon.com/eks/latest/userguide/eks-connector.html).
@@ -510,7 +571,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 1. When the command above indicates it's waiting for the control plane node, reboot the two nodes. This
    is to force them attempt to iPXE boot from the tinkerbell stack that `eksctl anywhere` command creates.
    **Note** that this must be done without interrupting the `eksctl anywhere create cluster` command.
-   
+
    Option 1 - You can use this command to automate it, but you'll need to be back on the original host.
 
    ```sh
