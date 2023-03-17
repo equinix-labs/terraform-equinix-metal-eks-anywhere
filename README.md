@@ -292,7 +292,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    ```
 
    ```sh
-   export EKSA_RELEASE="0.14.2" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=29
+   export EKSA_RELEASE="0.14.3" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=30
    curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}/artifacts/eks-a/v${EKSA_RELEASE}/${OS}/amd64/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" \
       --silent --location \
       | tar xz ./eksctl-anywhere
@@ -421,8 +421,8 @@ We've now provided the `eksa-admin` machine with all of the variables and config
          - environment:
             COMPRESSED: "true"
             DEST_DISK: /dev/sda
-            IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/28/artifacts/raw/1-25/bottlerocket-v1.25.6-eks-d-1-25-5-eks-a-28-amd64.img.gz
-         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-28
+            IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/raw/1-25/bottlerocket-v1.25.6-eks-d-1-25-7-eks-a-29-amd64.img.gz
+         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
          name: stream-image
          timeout: 600
          - environment:
@@ -449,7 +449,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
             GID: "0"
             MODE: "0644"
             UID: "0"
-         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-28
+         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
          name: write-netplan
          pid: host
          timeout: 90
@@ -465,7 +465,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
             GID: "0"
             MODE: "0644"
             UID: "0"
-         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-28
+         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
          name: write-bootconfig
          pid: host
          timeout: 90
@@ -478,11 +478,11 @@ We've now provided the `eksa-admin` machine with all of the variables and config
             HEGEL_URLS: http://${LC_POOL_ADMIN}:50061,http://${LC_TINK_VIP}:50061
             MODE: "0644"
             UID: "0"
-         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-28
+         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
          name: write-user-data
          pid: host
          timeout: 90
-         - image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-28
+         - image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
          name: reboot-image
          pid: host
          timeout: 90
