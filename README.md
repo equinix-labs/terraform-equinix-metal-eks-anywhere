@@ -79,6 +79,8 @@ eksa-node-dp-001   Ready    <none>                 5m30s   v1.22.10-eks-7dc61e8
 
 ## How to expand a cluster
 
+This section is an example of adding a new node of the exact same time as the previous nodes to the cluster. For example, if you use project defaults you'll want to add a m3.small.x86 as the new node. Also, this example is just adding a new worker node for simplicity. Adding control plane nodes is possible, but requires thinking through how many nodes are added as well as labeling them as `type=cp` instead of `type=worker`.
+
 ### Deploy an additional node
 
 ```sh
@@ -287,7 +289,7 @@ The following tools will be needed on your local development environment where y
 
       for id in $(echo $node_ids); do
          let i++
-        
+         BOND0_PORT=$(metal devices get -i $id -o json  | jq -r '.network_ports [] | select(.name == "bond0") | .id')
          ETH0_PORT=$(metal devices get -i $id -o json  | jq -r '.network_ports [] | select(.name == "eth0") | .id')
          metal port convert -i $BOND0_PORT --layer2 --bonded=false --force
          metal port vlan -i $ETH0_PORT -a $VLAN_ID
@@ -569,7 +571,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 1. When the command above indicates it's waiting for the control plane node, reboot the two nodes. This
    is to force them attempt to iPXE boot from the tinkerbell stack that `eksctl anywhere` command creates.
    **Note** that this must be done without interrupting the `eksctl anywhere create cluster` command.
-   
+
    Option 1 - You can use this command to automate it, but you'll need to be back on the original host.
 
    ```sh
