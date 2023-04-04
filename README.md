@@ -464,34 +464,33 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    ```
 
 1. Append the following to the $CLUSTER_NAME.yaml file.
-
-   ```sh
+   ```yaml
    cat << EOF >> $CLUSTER_NAME.yaml
    ---
    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
    kind: TinkerbellTemplateConfig
    metadata:
-   name: ${CLUSTER_NAME}
+     name: ${CLUSTER_NAME}
    spec:
-   template:
-      global_timeout: 6000
-      id: ""
-      name: ${CLUSTER_NAME}
-      tasks:
-      - actions:
+     template:
+       global_timeout: 6000
+       id: ""
+       name: ${CLUSTER_NAME}
+       tasks:
+       - actions:
          - environment:
-            COMPRESSED: "true"
-            DEST_DISK: /dev/sda
-            IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/raw/1-25/bottlerocket-v1.25.6-eks-d-1-25-7-eks-a-29-amd64.img.gz
-         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
-         name: stream-image
-         timeout: 600
+             COMPRESSED: "true"
+             DEST_DISK: /dev/sda
+             IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/29/artifacts/raw/1-25/bottlerocket-v1.25.6-eks-d-1-25-7-eks-a-29-amd64.img.gz
+           image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
+           name: stream-image
+           timeout: 600
          - environment:
-            CONTENTS: |
+             CONTENTS: |
                # Version is required, it will change as we support
                # additional settings
                version = 1
-
+   
                # "eno1" is the interface name
                # Users may turn on dhcp4 and dhcp6 via boolean
                [enp1s0f0np0]
@@ -503,59 +502,59 @@ We've now provided the `eksa-admin` machine with all of the variables and config
                # "primary" set, we choose the first interface in
                # the file
                primary = true
-            DEST_DISK: /dev/sda12
-            DEST_PATH: /net.toml
-            DIRMODE: "0755"
-            FS_TYPE: ext4
-            GID: "0"
-            MODE: "0644"
-            UID: "0"
-         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
-         name: write-netplan
-         pid: host
-         timeout: 90
+             DEST_DISK: /dev/sda12
+             DEST_PATH: /net.toml
+             DIRMODE: "0755"
+             FS_TYPE: ext4
+             GID: "0"
+             MODE: "0644"
+             UID: "0"
+           image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
+           name: write-netplan
+           pid: host
+           timeout: 90
          - environment:
-            BOOTCONFIG_CONTENTS: |
+             BOOTCONFIG_CONTENTS: |
                kernel {
-                  console = "ttyS1,115200n8"
+                   console = "ttyS1,115200n8"
                }
-            DEST_DISK: /dev/sda12
-            DEST_PATH: /bootconfig.data
-            DIRMODE: "0700"
-            FS_TYPE: ext4
-            GID: "0"
-            MODE: "0644"
-            UID: "0"
-         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
-         name: write-bootconfig
-         pid: host
-         timeout: 90
+             DEST_DISK: /dev/sda12
+             DEST_PATH: /bootconfig.data
+             DIRMODE: "0700"
+             FS_TYPE: ext4
+             GID: "0"
+             MODE: "0644"
+             UID: "0"
+           image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
+           name: write-bootconfig
+           pid: host
+           timeout: 90
          - environment:
-            DEST_DISK: /dev/sda12
-            DEST_PATH: /user-data.toml
-            DIRMODE: "0700"
-            FS_TYPE: ext4
-            GID: "0"
-            HEGEL_URLS: http://${LC_POOL_ADMIN}:50061,http://${LC_TINK_VIP}:50061
-            MODE: "0644"
-            UID: "0"
-         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
-         name: write-user-data
-         pid: host
-         timeout: 90
+             DEST_DISK: /dev/sda12
+             DEST_PATH: /user-data.toml
+             DIRMODE: "0700"
+             FS_TYPE: ext4
+             GID: "0"
+             HEGEL_URLS: http://${LC_POOL_ADMIN}:50061,http://${LC_TINK_VIP}:50061
+             MODE: "0644"
+             UID: "0"
+           image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
+           name: write-user-data
+           pid: host
+           timeout: 90
          - image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-29
-         name: reboot-image
-         pid: host
-         timeout: 90
-         volumes:
-         - /worker:/worker
+           name: reboot-image
+           pid: host
+           timeout: 90
+           volumes:
+           - /worker:/worker
          name: ${CLUSTER_NAME}
          volumes:
-         - /dev:/dev
-         - /dev/console:/dev/console
-         - /lib/firmware:/lib/firmware:ro
+           - /dev:/dev
+           - /dev/console:/dev/console
+           - /lib/firmware:/lib/firmware:ro
          worker: '{{.device_1}}'
-      version: "0.1"
+       version: "0.1"
    EOF
    ```
 
@@ -568,7 +567,7 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 
 ### Steps to run locally while `eksctl anywhere` is creating the cluster
 
-1. When the command above indicates it's waiting for the control plane node, reboot the two nodes. This
+1. When the command above indicates that it is `Creating new workload cluster`, reboot the two nodes. This
    is to force them attempt to iPXE boot from the tinkerbell stack that `eksctl anywhere` command creates.
    **Note** that this must be done without interrupting the `eksctl anywhere create cluster` command.
 
