@@ -399,8 +399,37 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    eksctl anywhere generate clusterconfig $CLUSTER_NAME --provider tinkerbell > $CLUSTER_NAME.yaml
    ```
 
-   > **Note**
-   > The remaining steps assume you have defined the variables set above.
+   > **Note:**
+   > The remaining steps assume you have defined the variables set above. 
+ 
+
+   Steps 6-10 guide you through updating the configuration file with IP addresses, hardware specifications, and other settings for a successful deployment.   
+   
+      > **Note:**
+   > You can either follow the manual instructions step-by-step or run the following commands to automate the same. If you are running the below steps, skip ahead to step 11 once this is completed.
+
+   Install yq
+   ```
+   snap install yq
+   ```
+   Generate a public SSH key and store it in a variable called *'SSH_PUBLIC_KEY'*
+   ```
+   ssh-keygen -t rsa
+   SSH_PUBLIC_KEY=$(cat /root/.ssh/id_rsa.pub)
+   ```
+
+   Run the below yq command to make the necessary changes to the $CLUSTER_NAME.yaml file.
+   ```
+   yq eval -i '
+   (select(.kind == "Cluster") | .spec.controlPlaneConfiguration.endpoint.host) = env(LC_POOL_VIP) |
+   (select(.kind == "TinkerbellDatacenterConfig") | .spec.tinkerbellIP) = env(LC_TINK_VIP) |
+   (select(.kind == "TinkerbellMachineConfig") | (.spec.users[] | select(.name == "ec2-user")).sshAuthorizedKeys) = [env(SSH_PUBLIC_KEY)] |
+   (select(.kind == "TinkerbellMachineConfig" and .metadata.name == env(CLUSTER_NAME) + "-cp" ) | .spec.hardwareSelector.type) = "cp" |
+   (select(.kind == "TinkerbellMachineConfig" and .metadata.name == env(CLUSTER_NAME)) | .spec.hardwareSelector.type) = "worker" |
+   (select(.kind == "TinkerbellMachineConfig") | .spec.templateRef.kind) = "TinkerbellTemplateConfig" |
+   (select(.kind == "TinkerbellMachineConfig") | .spec.templateRef.name) = env(CLUSTER_NAME)
+   ' $CLUSTER_NAME.yaml
+   ```
 
 1. Manually set control-plane IP for `Cluster` resource in the config
 
