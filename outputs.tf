@@ -1,3 +1,7 @@
+output "eksa_admin_id" {
+  value = equinix_metal_device.eksa_admin.id
+}
+
 output "eksa_admin_ip" {
   value = equinix_metal_device.eksa_admin.network[0].address
 }
@@ -29,6 +33,11 @@ output "eksa_public_ips_netmask" {
 output "eksa_vlan_id" {
   description = "UUID of the Equinix Metal VLAN"
   value       = equinix_metal_vlan.provisioning_vlan.id
+}
+
+output "eksa_vlan_vnid" {
+  description = "VNID of the Equinix Metal VLAN"
+  value       = equinix_metal_vlan.provisioning_vlan.vxlan
 }
 
 # Out-of-band console ( Serial Over SSH - https://metal.equinix.com/developers/docs/resilience-recovery/serial-over-ssh/)

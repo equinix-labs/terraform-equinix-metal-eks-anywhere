@@ -1,0 +1,97 @@
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellTemplateConfig
+metadata:
+  name: $${TEMPLATE_NAME}
+spec:
+  template:
+    global_timeout: 6000
+    id: ""
+    name: $${TEMPLATE_NAME}
+    tasks:
+    - actions:
+      - environment:
+          COMPRESSED: "true"
+          DEST_DISK: /dev/sda
+          IMG_URL: $${BOTTLEROCKET_IMAGE_URL}
+        image: $${TINKERBELL_IMAGE_IMAGE2DISK}
+        name: stream-image
+        timeout: 600
+      - environment:
+          CONTENTS: |
+            # Version is required, it will change as we support
+            # additional settings
+            version = 3
+
+            # First interface name
+            # Users may turn on dhcp4 and dhcp6 via boolean
+            [$${NIC_NAME}]
+            dhcp4 = true
+            dhcp6 = false
+            # Define this interface as the "primary" interface
+            # for the system.  This IP is what kubelet will use
+            # as the node IP.  If none of the interfaces has
+            # "primary" set, we choose the first interface in
+            # the file
+            primary = true
+
+            [[$${NIC_NAME}.route]]
+            to = "${RDS_SUBNET1}"
+            via = "${GW_BIRD_ROUTER_IP}"
+
+            [[$${NIC_NAME}.route]]
+            to = "${RDS_SUBNET2}"
+            via = "${GW_BIRD_ROUTER_IP}"
+          DEST_DISK: /dev/sda12
+          DEST_PATH: /net.toml
+          DIRMODE: "0755"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0644"
+          UID: "0"
+        image: $${TINKERBELL_IMAGES_WRITEFILE}
+        name: write-netplan
+        pid: host
+        timeout: 90
+      - environment:
+          BOOTCONFIG_CONTENTS: |
+            kernel {
+                console = "ttyS1,115200n8"
+            }
+          DEST_DISK: /dev/sda12
+          DEST_PATH: /bootconfig.data
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0644"
+          UID: "0"
+        image: $${TINKERBELL_IMAGES_WRITEFILE}
+        name: write-bootconfig
+        pid: host
+        timeout: 90
+      - environment:
+          DEST_DISK: /dev/sda12
+          DEST_PATH: /user-data.toml
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          HEGEL_URLS: http://$${POOL_ADMIN}:50061,http://$${TINK_VIP}:50061
+          MODE: "0644"
+          UID: "0"
+        image: $${TINKERBELL_IMAGES_WRITEFILE}
+        name: write-user-data
+        pid: host
+        timeout: 90
+      - image: $${TINKERBELL_IMAGES_REBOOT}
+        name: reboot-image
+        pid: host
+        timeout: 90
+        volumes:
+        - /worker:/worker
+      name: $${TEMPLATE_NAME}
+      volumes:
+        - /dev:/dev
+        - /dev/console:/dev/console
+        - /lib/firmware:/lib/firmware:ro
+      worker: '{{.device_1}}'
+    version: "0.1"

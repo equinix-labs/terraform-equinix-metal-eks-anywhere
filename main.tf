@@ -151,6 +151,7 @@ resource "equinix_metal_device" "eksa_admin" {
     ADMIN_IP                    = local.pool_admin
     EKSA_VERSION_RELEASE        = var.eksa_version.release
     EKSA_VERSION_RELEASE_NUMBER = var.eksa_version.release_number
+    K8S_VERSION                 = var.kubernetes_version
     NETMASK                     = equinix_metal_reserved_ip_block.public_ips.netmask
     VLAN_VNID                   = equinix_metal_vlan.provisioning_vlan.vxlan
     CIDR                        = equinix_metal_reserved_ip_block.public_ips.cidr

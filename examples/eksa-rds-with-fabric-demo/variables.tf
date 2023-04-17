@@ -3,21 +3,43 @@ variable "metal_api_token" {
   type        = string
 }
 
+variable "fabric_client_id" {
+  description = "Equinix Fabric auth client id"
+  type        = string
+}
+
+variable "fabric_client_secret" {
+  description = "Equinix Metal auth client secret"
+  type        = string
+}
+
 variable "project_id" {
   description = "Project ID"
   type        = string
+}
+
+variable "metro" {
+  description = "Equinix metro to provision in"
+  type        = string
+  default     = "DA"
+}
+
+variable "fabric_speed" {
+  type        = number
+  description = "Speed/Bandwidth in Mbps to be allocated to the connection. Valid values are (50, 100, 200, 500, 1000, 2000, 5000, 10000)"
+  default     = 50
+}
+
+variable "fabric_notification_users" {
+  type        = list(any)
+  description = "String list of users to notify"
+  default     = [ "example@equinix.com" ]
 }
 
 variable "cluster_name" {
   type        = string
   description = "Cluster name"
   default     = "my-eksa-cluster"
-}
-
-variable "metro" {
-  description = "Equinix metro to provision in"
-  type        = string
-  default     = "sv"
 }
 
 variable "provisioner_device_type" {
@@ -59,7 +81,7 @@ variable "worker_device_count" {
 variable "tags" {
   type        = list(any)
   description = "String list of common tags for Equinix resources"
-  default     = ["eksa", "terraform"]
+  default     = ["eksa", "fabric", "terraform"]
 }
 
 variable "kubernetes_version" {
@@ -94,24 +116,28 @@ variable "tinkerbell_images" {
   })
 }
 
-variable "plan_nic" {
-  description = "Map of plans to expected NIC device name."
-  default = {
-    "m3.small.x86"  = "enp1s0f0np0"
-    "c2.medium.x86" = "enp131s0f0np0"
-  }
-  type = map(string)
+## AWS variables
+variable "aws_account_id" {
+  type        = number
+  description = "AWS Account ID - used as Equinix Fabric authorization Key to create a Direct Connect connection"
+  default     = 50
 }
 
-variable "permit_root_ssh_password" {
-  description = "Enable root SSH logins via password. This is intended for lab environments."
-  default     = false
-  type        = bool
+variable "aws_dx_vif_amazon_address" {
+  description = "AWS Direct Connect - BGP Cloud Address"
+  default     = "169.254.0.1/30"
 }
 
-variable "create_cluster_timeout" {
-  description = "Time to wait for the create_cluster phase (example: 25m)"
-  default     = "25m"
+variable "aws_dx_vif_customer_address" {
+  description = "AWS Direct Connect - BGP Cloud Address"
+  default     = "169.254.0.2/30"
 }
 
-# variable "tinkerbelltemplateconfig" {}
+variable "aws_dx_vif_customer_asn" {
+  description = "AWS Direct Connect - BGP Local ASN"
+  default     = "65000"
+}
+
+variable "aws_dx_vif_netmask" {
+  default = "255.255.255.252"
+}
