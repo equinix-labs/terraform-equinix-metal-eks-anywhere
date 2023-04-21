@@ -588,3 +588,4 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    ```sh
    ssh {node-uuid}@sos.{facility-code}.platformequinix.com -i </path/to/ssh-key>
    ```
+   ## TEST DEMO
