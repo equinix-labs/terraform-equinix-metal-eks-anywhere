@@ -10,6 +10,11 @@ This project deploys EKS-A Anywhere on Baremetal on Equinix Metal using the mini
 
 See <https://aws.amazon.com/blogs/containers/getting-started-with-eks-anywhere-on-bare-metal/> for more information about EKS-A on Bare Metal.
 
+A guided step-by-step manual installation workshop is available at
+
+<https://equinix-labs.github.io/eks-anywhere-on-equinix-metal-workshop/>
+If you want to learn more about how EKS-A is installed on Metal to better understand how and where you can adapt changes for your environments, we recommend following the manual workshop.
+
 ## Demos
 
 In the [examples/lab](./examples/lab/) directory, you can find a Terraform module to faciliate EKS-A on Bare Metal Lab environments.
@@ -23,7 +28,7 @@ EKS-A requires UEFI booting, which is supported by the following Equinix Metal O
 * ~~n3.xlarge.x86~~
 * ~~a3.large.x86~~
 
-## Using Terraform
+## Deploying the Example
 
 With your [Equinix Metal account, project, and a **User** API token](https://metal.equinix.com/developers/docs/accounts/users/), you can use [Terraform v1+](https://learn.hashicorp.com/tutorials/terraform/install-cli) to install a proof-of-concept demonstration environment for EKS-A on Baremetal.
 
@@ -401,12 +406,6 @@ We've now provided the `eksa-admin` machine with all of the variables and config
 
    > **Note:**
    > The remaining steps assume you have defined the variables set above. 
- 
-
-   Steps 6-10 guide you through updating the configuration file with IP addresses, hardware specifications, and other settings for a successful deployment.   
-   
-      > **Note:**
-   > You can either follow the manual instructions step-by-step or run the following commands to automate the same. If you are running the below steps, skip ahead to step 11 once this is completed.
 
    Install yq
    ```
@@ -415,10 +414,17 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    Generate a public SSH key and store it in a variable called *'SSH_PUBLIC_KEY'*
    ```
    ssh-keygen -t rsa
-   SSH_PUBLIC_KEY=$(cat /root/.ssh/id_rsa.pub)
+   export SSH_PUBLIC_KEY=$(cat /root/.ssh/id_rsa.pub)
    ```
 
-   Run the below yq command to make the necessary changes to the $CLUSTER_NAME.yaml file.
+1. Run the below yq command to make the following necessary changes to the $CLUSTER_NAME.yaml file.
+
+   * Set control-plane IP for Cluster resource.
+   * Set the TinkerbellDatacenterConfig resource spec in config
+   * Set the public ssh key in TinkerbellMachineConfig users[name=ec2-user].sshAuthorizedKeys
+   * Set the hardwareSelector for each TinkerbellMachineConfig
+   * Change the templateRef for each TinkerbellMachineConfig section
+
    ```
    yq eval -i '
    (select(.kind == "Cluster") | .spec.controlPlaneConfiguration.endpoint.host) = env(LC_POOL_VIP) |
@@ -429,67 +435,6 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    (select(.kind == "TinkerbellMachineConfig") | .spec.templateRef.kind) = "TinkerbellTemplateConfig" |
    (select(.kind == "TinkerbellMachineConfig") | .spec.templateRef.name) = env(CLUSTER_NAME)
    ' $CLUSTER_NAME.yaml
-   ```
-
-1. Manually set control-plane IP for `Cluster` resource in the config
-
-   ``` sh
-   echo $LC_POOL_VIP
-   ```
-
-   ```yaml
-   controlPlaneConfiguration:
-    count: 1
-    endpoint:
-      host: "<value of LC_POOL_VIP>"
-   ```
-
-1. Manually set the `TinkerbellDatacenterConfig` resource `spec` in config:
-
-   ``` sh
-   echo $LC_TINK_VIP
-   ```
-
-   ```yaml
-   spec:
-     tinkerbellIP: "<value of LC_TINK_VIP>"
-   ```
-
-1. Manually set the public ssh key in `TinkerbellMachineConfig` `users[name=ec2-user].sshAuthorizedKeys`
-   The SSH Key can be a locally generated on `eksa-admin` (`ssh-keygen -t rsa`) or an existing user key.
-
-   ```sh
-   ssh-keygen -t rsa
-   ```
-
-   ```sh
-   cat /root/.ssh/id_rsa.pub
-   ```
-
-1. Manually set the hardwareSelector for each TinkerbellMachineConfig.
-
-   For the control plane machine.
-
-   ```sh
-   spec:
-     hardwareSelector:
-       type: cp
-   ```
-
-   For the worker machine.
-
-   ```sh
-   spec:
-     hardwareSelector:
-       type: worker
-   ```
-
-1. Change the templateRef for each TinkerbellMachineConfig section
-
-   ```sh
-   templateRef:
-     kind: TinkerbellTemplateConfig
-     name: $CLUSTER_NAME
    ```
 
 1. Append the following to the $CLUSTER_NAME.yaml file.
@@ -617,3 +562,47 @@ We've now provided the `eksa-admin` machine with all of the variables and config
    ```sh
    ssh {node-uuid}@sos.{facility-code}.platformequinix.com -i </path/to/ssh-key>
    ```
+
+### Confirm Success
+
+1. You can see the below logs message if the whole process is successful.
+    ```
+    Installing networking on workload cluster
+    Creating EKS-A namespace
+    Installing cluster-api providers on workload cluster
+    Installing EKS-A secrets on workload cluster
+    Installing resources on management cluster
+    Moving cluster management from bootstrap to workload cluster
+    Installing EKS-A custom components (CRD and controller) on workload cluster
+    Installing EKS-D components on workload cluster
+    Creating EKS-A CRDs instances on workload cluster
+    Installing GitOps Toolkit on workload cluster
+    GitOps field not specified, bootstrap flux skipped
+    Writing cluster config file
+    Deleting bootstrap cluster
+    :tada: Cluster created!
+    --------------------------------------------------------------------------------------
+    The Amazon EKS Anywhere Curated Packages are only available to customers with the 
+    Amazon EKS Anywhere Enterprise Subscription
+    --------------------------------------------------------------------------------------
+    Enabling curated packages on the cluster
+    Installing helm chart on cluster	{"chart": "eks-anywhere-packages", "version": "0.2.30-eks-a-29"}
+
+    ```
+
+### To Verify the nodes are deployed properly.
+
+1. To verify the nodes are deployed properly OR Not.
+
+    ```sh
+    LC_POOL_ADMIN=$POOL_ADMIN LC_POOL_VIP=$POOL_VIP LC_TINK_VIP=$TINK_VIP ssh -o SendEnv=LC_POOL_ADMIN,LC_POOL_VIP,LC_TINK_VIP root@$PUB_ADMIN
+    ```
+
+    ```sh
+    cp <CLUSTER_NAME Directory>/<CLUSTER_NAME>-eks-a-cluster.kubeconfig /root/.kube/config
+    ```
+    
+    ```sh
+    kubectl get nodes -A
+    kubectl get pods -A
+    ```
