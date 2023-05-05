@@ -5,10 +5,13 @@ provider "equinix" {
 
 terraform {
   required_version = ">= 1.3"
-
+  provider_meta "equinix" {
+    module_name = "equinix-metal-eks-anywhere/lab"
+  }
   required_providers {
     equinix = {
       source = "equinix/equinix"
+      version = ">= 1.11.0"
     }
   }
 }
